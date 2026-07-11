@@ -11,12 +11,14 @@ class CategoryGrid extends StatelessWidget {
     required this.onCategorySelected,
     this.selectedCategory,
     this.maxHeight = 220,
+    this.embedded = false,
   });
 
   final List<CategoryModel> categories;
   final CategoryModel? selectedCategory;
   final ValueChanged<CategoryModel> onCategorySelected;
   final double maxHeight;
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
@@ -32,64 +34,73 @@ class CategoryGrid extends StatelessWidget {
       );
     }
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      child: GridView.builder(
-        shrinkWrap: true,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          mainAxisSpacing: MSizes.sm,
-          crossAxisSpacing: MSizes.sm,
-          childAspectRatio: 1.05,
-        ),
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final category = categories[index];
-          final isSelected = selectedCategory?.cId == category.cId;
-          final color = Color(category.color);
+    final grid = GridView.builder(
+      shrinkWrap: true,
+      physics: embedded
+          ? const NeverScrollableScrollPhysics()
+          : const AlwaysScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: MSizes.sm,
+        crossAxisSpacing: MSizes.sm,
+        childAspectRatio: 1.05,
+      ),
+      itemCount: categories.length,
+      itemBuilder: (context, index) {
+        final category = categories[index];
+        final isSelected = selectedCategory?.cId == category.cId;
+        final color = Color(category.color);
 
-          return Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => onCategorySelected(category),
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected ? color : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    FaIcon(
-                      categoryIcons[category.iconIndex],
-                      color: color,
-                      size: 22,
-                    ),
-                    const SizedBox(height: MSizes.xs),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(
-                        category.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                    ),
-                  ],
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => onCategorySelected(category),
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isSelected ? color : Colors.transparent,
+                  width: 2,
                 ),
               ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  FaIcon(
+                    categoryIcons[category.iconIndex],
+                    color: color,
+                    size: 22,
+                  ),
+                  const SizedBox(height: MSizes.xs),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      category.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
+    );
+
+    if (embedded) {
+      return grid;
+    }
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: grid,
     );
   }
 }

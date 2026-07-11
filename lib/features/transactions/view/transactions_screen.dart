@@ -8,6 +8,7 @@ import 'package:money_tracker_app/data/models/category/category_model.dart';
 import 'package:money_tracker_app/data/models/enum/enum.dart';
 import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
 import 'package:money_tracker_app/features/categories/bloc/category_bloc.dart';
+import 'package:money_tracker_app/features/settings/view/manage_categories_screen.dart';
 import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
 import 'package:money_tracker_app/features/transactions/utils/transaction_filters.dart';
 import 'package:money_tracker_app/features/transactions/view/transaction_detail_screen.dart';
@@ -69,6 +70,16 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               ),
         ),
         actions: [
+          IconButton(
+            onPressed: () {
+              MHelperFunctions.navigateToScreen(
+                context,
+                const ManageCategoriesScreen(),
+              );
+            },
+            tooltip: 'Manage categories',
+            icon: const Icon(Icons.category_outlined),
+          ),
           IconButton(
             onPressed: _toggleFilters,
             tooltip: 'Filters',
@@ -139,7 +150,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               child: GestureDetector(
                 onTap: _collapseFilters,
                 behavior: HitTestBehavior.translucent,
-                child: filtered.isEmpty
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    if (notification is ScrollStartNotification &&
+                        _filtersExpanded) {
+                      _collapseFilters();
+                    }
+                    return false;
+                  },
+                  child: filtered.isEmpty
                   ? Center(
                       child: Text(
                         transactions.isEmpty
@@ -201,6 +220,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       },
                     ),
               ),
+                ),
             ),
           ],
         );
@@ -364,7 +384,7 @@ class _TransactionFiltersPanel extends StatelessWidget {
             ),
             const SizedBox(height: MSizes.md),
             MTextFormField(
-              label: 'Filter by category',
+              label: 'Category',
               hintText: filters.category?.title ?? 'All categories',
               prefixIcon: filters.category != null
                   ? categoryIcons[filters.category!.iconIndex]
