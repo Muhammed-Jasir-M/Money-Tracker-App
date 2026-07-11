@@ -33,3 +33,21 @@ class UpdateCurrencySymbol extends SettingsEvent {
   @override
   List<Object?> get props => [currencySymbol];
 }
+
+class UpdateLockEnabled extends SettingsEvent {
+  UpdateLockEnabled(this.lockEnabled);
+
+  final bool lockEnabled;
+
+  @override
+  List<Object?> get props => [lockEnabled];
+}
+
+class UpdateUseBiometric extends SettingsEvent {
+  UpdateUseBiometric(this.useBiometric);
+
+  final bool useBiometric;
+
+  @override
+  List<Object?> get props => [useBiometric];
+}

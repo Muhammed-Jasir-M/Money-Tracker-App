@@ -21,6 +21,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<UpdateThemeMode>(_onUpdateThemeMode);
     on<UpdateUserName>(_onUpdateUserName);
     on<UpdateCurrencySymbol>(_onUpdateCurrencySymbol);
+    on<UpdateLockEnabled>(_onUpdateLockEnabled);
+    on<UpdateUseBiometric>(_onUpdateUseBiometric);
 
     if (initialSettings == null) {
       add(LoadSettings());
@@ -75,6 +77,30 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     try {
       final settings =
           await _repository.updateCurrencySymbol(event.currencySymbol);
+      emit(SettingsLoaded(settings));
+    } catch (e) {
+      emit(SettingsError(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateLockEnabled(
+    UpdateLockEnabled event,
+    Emitter<SettingsState> emit,
+  ) async {
+    try {
+      final settings = await _repository.updateLockEnabled(event.lockEnabled);
+      emit(SettingsLoaded(settings));
+    } catch (e) {
+      emit(SettingsError(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateUseBiometric(
+    UpdateUseBiometric event,
+    Emitter<SettingsState> emit,
+  ) async {
+    try {
+      final settings = await _repository.updateUseBiometric(event.useBiometric);
       emit(SettingsLoaded(settings));
     } catch (e) {
       emit(SettingsError(e.toString()));

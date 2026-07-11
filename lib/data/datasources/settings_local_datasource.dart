@@ -11,6 +11,8 @@ class SettingsLocalDatasource {
   static const _themeKey = 'themeMode';
   static const _userNameKey = 'userName';
   static const _currencySymbolKey = 'currencySymbol';
+  static const _lockEnabledKey = 'lockEnabled';
+  static const _useBiometricKey = 'useBiometric';
 
   AppSettings getSettings() {
     final themeValue = _box.get(_themeKey, defaultValue: 'system') as String;
@@ -18,6 +20,9 @@ class SettingsLocalDatasource {
     final currencySymbol =
         _box.get(_currencySymbolKey, defaultValue: CurrencyOptions.defaultSymbol)
             as String;
+    final lockEnabled = _box.get(_lockEnabledKey, defaultValue: false) as bool;
+    final useBiometric =
+        _box.get(_useBiometricKey, defaultValue: false) as bool;
 
     return AppSettings(
       themeMode: AppSettings.themeModeFromString(themeValue),
@@ -25,6 +30,8 @@ class SettingsLocalDatasource {
       currencySymbol: CurrencyOptions.symbols.contains(currencySymbol)
           ? currencySymbol
           : CurrencyOptions.defaultSymbol,
+      lockEnabled: lockEnabled,
+      useBiometric: useBiometric,
     );
   }
 
@@ -40,9 +47,19 @@ class SettingsLocalDatasource {
     await _box.put(_currencySymbolKey, currencySymbol);
   }
 
+  Future<void> saveLockEnabled(bool lockEnabled) async {
+    await _box.put(_lockEnabledKey, lockEnabled);
+  }
+
+  Future<void> saveUseBiometric(bool useBiometric) async {
+    await _box.put(_useBiometricKey, useBiometric);
+  }
+
   Future<void> saveAll(AppSettings settings) async {
     await saveThemeMode(settings.themeMode);
     await saveUserName(settings.userName);
     await saveCurrencySymbol(settings.currencySymbol);
+    await saveLockEnabled(settings.lockEnabled);
+    await saveUseBiometric(settings.useBiometric);
   }
 }

@@ -7,11 +7,15 @@ class AppSettings extends Equatable {
     this.themeMode = ThemeMode.system,
     this.userName = '',
     this.currencySymbol = CurrencyOptions.defaultSymbol,
+    this.lockEnabled = false,
+    this.useBiometric = false,
   });
 
   final ThemeMode themeMode;
   final String userName;
   final String currencySymbol;
+  final bool lockEnabled;
+  final bool useBiometric;
 
   String get displayName => userName.trim().isEmpty ? 'there' : userName.trim();
 
@@ -19,11 +23,15 @@ class AppSettings extends Equatable {
     ThemeMode? themeMode,
     String? userName,
     String? currencySymbol,
+    bool? lockEnabled,
+    bool? useBiometric,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
       userName: userName ?? this.userName,
       currencySymbol: currencySymbol ?? this.currencySymbol,
+      lockEnabled: lockEnabled ?? this.lockEnabled,
+      useBiometric: useBiometric ?? this.useBiometric,
     );
   }
 
@@ -44,5 +52,6 @@ class AppSettings extends Equatable {
   }
 
   @override
-  List<Object?> get props => [themeMode, userName, currencySymbol];
+  List<Object?> get props =>
+      [themeMode, userName, currencySymbol, lockEnabled, useBiometric];
 }

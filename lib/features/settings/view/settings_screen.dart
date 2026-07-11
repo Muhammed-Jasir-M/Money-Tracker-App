@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:money_tracker_app/core/backup/backup_service.dart';
 import 'package:money_tracker_app/core/constants/currencies.dart';
+import 'package:money_tracker_app/core/export/csv_export_service.dart';
+import 'package:money_tracker_app/core/security/lock_service.dart';
 import 'package:money_tracker_app/core/storage/receipt_storage.dart';
 import 'package:money_tracker_app/core/constants/colors.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
@@ -11,6 +13,7 @@ import 'package:money_tracker_app/data/models/settings/app_settings.dart';
 import 'package:money_tracker_app/features/budgets/bloc/budget_bloc.dart';
 import 'package:money_tracker_app/features/budgets/view/manage_budgets_screen.dart';
 import 'package:money_tracker_app/features/categories/bloc/category_bloc.dart';
+import 'package:money_tracker_app/features/security/view/pin_entry_sheet.dart';
 import 'package:money_tracker_app/features/settings/bloc/settings_bloc.dart';
 import 'package:money_tracker_app/features/settings/view/manage_categories_screen.dart';
 import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
@@ -31,11 +34,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String? _loadedName;
   bool _isEditingName = false;
   bool _isBackupBusy = false;
+  bool _isExportBusy = false;
+  bool? _biometricAvailable;
 
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadBiometricAvailability();
+  }
+
+  Future<void> _loadBiometricAvailability() async {
+    final repository = context.read<SettingsBloc>().repository;
+    try {
+      final available = await repository.lockService.canUseBiometrics();
+      if (!mounted) return;
+      setState(() => _biometricAvailable = available);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _biometricAvailable = false);
+    }
   }
 
   void _syncNameField(String userName) {
@@ -137,6 +160,185 @@ class _SettingsScreenState extends State<SettingsScreen> {
       categoryRepository: context.read<CategoryBloc>().repository,
       budgetRepository: context.read<BudgetBloc>().repository,
       settingsRepository: context.read<SettingsBloc>().repository,
+    );
+  }
+
+  CsvExportService _csvExportService() {
+    return CsvExportService(
+      transactionRepository: context.read<TransactionBloc>().repository,
+    );
+  }
+
+  Future<void> _exportCsv(AppSettings settings) async {
+    setState(() => _isExportBusy = true);
+    try {
+      await _csvExportService().exportAndShare(
+        currencySymbol: settings.currencySymbol,
+      );
+      if (!mounted) return;
+      MHelperFunctions.showSuccessSnackBar(
+        context,
+        title: 'Export ready',
+        message: 'Choose where to save or share your CSV file',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      MHelperFunctions.showErrorSnackBar(
+        context,
+        title: 'Export failed',
+        message: e.toString(),
+      );
+    } finally {
+      if (mounted) setState(() => _isExportBusy = false);
+    }
+  }
+
+  Future<void> _onLockToggle(bool enabled, AppSettings settings) async {
+    final repository = context.read<SettingsBloc>().repository;
+    final settingsBloc = context.read<SettingsBloc>();
+
+    try {
+      if (enabled) {
+        final hasPin = await repository.hasPin();
+        if (!hasPin && mounted) {
+          final created = await PinEntrySheet.show(
+            context: context,
+            mode: PinEntryMode.setup,
+            onCompleted: (pin) async {
+              await repository.setPin(pin);
+            },
+          );
+          if (created != true || !mounted) return;
+        }
+        settingsBloc.add(UpdateLockEnabled(true));
+        await _loadBiometricAvailability();
+        if (!mounted) return;
+        MHelperFunctions.showSuccessSnackBar(
+          context,
+          title: 'App lock enabled',
+          message: 'You will need your PIN when reopening the app',
+        );
+        return;
+      }
+
+      final verified = await PinEntrySheet.show(
+        context: context,
+        mode: PinEntryMode.verifyToDisable,
+        verifyPin: repository.verifyPin,
+        onCompleted: (_) async {
+          await repository.clearPin();
+          settingsBloc.add(UpdateLockEnabled(false));
+        },
+      );
+      if (verified != true || !mounted) return;
+      MHelperFunctions.showSuccessSnackBar(
+        context,
+        title: 'App lock disabled',
+      );
+    } on LockException catch (e) {
+      if (!mounted) return;
+      MHelperFunctions.showErrorSnackBar(
+        context,
+        title: 'App lock unavailable',
+        message: e.message,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      MHelperFunctions.showErrorSnackBar(
+        context,
+        title: 'App lock failed',
+        message: e.toString(),
+      );
+    }
+  }
+
+  Future<void> _onBiometricToggle(bool enabled, AppSettings settings) async {
+    if (!settings.lockEnabled) return;
+
+    final repository = context.read<SettingsBloc>().repository;
+    final settingsBloc = context.read<SettingsBloc>();
+
+    try {
+      if (enabled) {
+        final available = await repository.lockService.canUseBiometrics();
+        if (!available) {
+          if (!mounted) return;
+          MHelperFunctions.showErrorSnackBar(
+            context,
+            title: 'Biometrics unavailable',
+            message:
+                'Add a fingerprint or face unlock in your device settings first',
+          );
+          return;
+        }
+
+        final authenticated =
+            await repository.lockService.authenticateWithBiometrics(
+          reason: 'Confirm biometrics to enable app unlock',
+        );
+        if (!authenticated || !mounted) return;
+
+        settingsBloc.add(UpdateUseBiometric(true));
+        MHelperFunctions.showSuccessSnackBar(
+          context,
+          title: 'Biometric unlock enabled',
+        );
+        return;
+      }
+
+      settingsBloc.add(UpdateUseBiometric(false));
+      if (!mounted) return;
+      MHelperFunctions.showSuccessSnackBar(
+        context,
+        title: 'Biometric unlock disabled',
+      );
+    } on LockException catch (e) {
+      if (!mounted) return;
+      MHelperFunctions.showErrorSnackBar(
+        context,
+        title: 'Biometric unlock failed',
+        message: e.message,
+      );
+    }
+  }
+
+  String _biometricSubtitle(AppSettings settings) {
+    if (!settings.lockEnabled) {
+      return 'Enable app lock first';
+    }
+    if (_biometricAvailable == null) {
+      return 'Checking fingerprint support...';
+    }
+    if (_biometricAvailable == false) {
+      return 'Set up fingerprint or face unlock in device settings';
+    }
+    return 'Use fingerprint or face unlock';
+  }
+
+  Future<void> _changePin(AppSettings settings) async {
+    if (!settings.lockEnabled) return;
+
+    final repository = context.read<SettingsBloc>().repository;
+    final verified = await PinEntrySheet.show(
+      context: context,
+      mode: PinEntryMode.verifyCurrent,
+      verifyPin: repository.verifyPin,
+      onCompleted: (_) async {},
+    );
+    if (verified != true || !mounted) return;
+
+    final changed = await PinEntrySheet.show(
+      context: context,
+      mode: PinEntryMode.setup,
+      onCompleted: (pin) async {
+        await repository.setPin(pin);
+      },
+    );
+    if (changed != true || !mounted) return;
+
+    MHelperFunctions.showSuccessSnackBar(
+      context,
+      title: 'PIN updated',
     );
   }
 
@@ -549,6 +751,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: MSizes.md),
             _SettingsSectionCard(
               isDark: isDark,
+              title: 'Security',
+              child: Column(
+                children: [
+                  _SettingsSwitchTile(
+                    icon: Icons.lock_outline,
+                    title: 'App lock',
+                    subtitle: settings.lockEnabled
+                        ? 'Require PIN when opening the app'
+                        : 'Protect the app with a 4-digit PIN',
+                    value: settings.lockEnabled,
+                    onChanged: (value) => _onLockToggle(value, settings),
+                  ),
+                  const SizedBox(height: MSizes.sm),
+                  _SettingsSwitchTile(
+                    icon: Icons.fingerprint,
+                    title: 'Biometric unlock',
+                    subtitle: _biometricSubtitle(settings),
+                    value: settings.useBiometric,
+                    onChanged: settings.lockEnabled && _biometricAvailable == true
+                        ? (value) => _onBiometricToggle(value, settings)
+                        : null,
+                  ),
+                  if (settings.lockEnabled) ...[
+                    const SizedBox(height: MSizes.sm),
+                    _SettingsTile(
+                      icon: Icons.pin_outlined,
+                      title: 'Change PIN',
+                      subtitle: 'Update your 4-digit unlock PIN',
+                      onTap: () => _changePin(settings),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: MSizes.md),
+            _SettingsSectionCard(
+              isDark: isDark,
               title: 'Backup & restore',
               child: Column(
                 children: [
@@ -566,6 +805,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'Restore backup',
                     subtitle: 'Replace current data from a backup JSON file',
                     onTap: _isBackupBusy ? null : _restoreBackup,
+                  ),
+                  const SizedBox(height: MSizes.sm),
+                  _SettingsTile(
+                    icon: Icons.table_chart_outlined,
+                    title: 'Export transactions (CSV)',
+                    subtitle: _isExportBusy
+                        ? 'Please wait...'
+                        : 'Spreadsheet-friendly export for Excel or Google Sheets',
+                    onTap: _isExportBusy || _isBackupBusy
+                        ? null
+                        : () => _exportCsv(settings),
                   ),
                 ],
               ),
@@ -600,8 +850,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _SettingsTile(
                     icon: Icons.delete_forever_outlined,
                     title: 'Reset all data',
-                    subtitle:
-                        'Delete everything and restore default settings',
+                    subtitle: 'Delete everything and restore defaults',
                     onTap: _resetAllData,
                     destructive: true,
                   ),
@@ -768,6 +1017,81 @@ class _SettingsTile extends StatelessWidget {
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsSwitchTile extends StatelessWidget {
+  const _SettingsSwitchTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = MHelperFunctions.isDarkMode(context);
+
+    return Material(
+      color: isDark ? MColors.dark : MColors.bgLight,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: MSizes.sm,
+          vertical: MSizes.sm,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: MColors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 20, color: MColors.primary),
+            ),
+            const SizedBox(width: MSizes.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.color
+                              ?.withValues(alpha: 0.7),
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            Switch.adaptive(
+              value: value,
+              onChanged: onChanged,
+              activeThumbColor: MColors.primary,
+            ),
+          ],
         ),
       ),
     );

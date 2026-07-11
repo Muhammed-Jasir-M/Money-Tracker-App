@@ -23,11 +23,19 @@ class MoneyFormat {
 
   static String compact(double value, String symbol) {
     if (value >= 1000000) {
-      return '$symbol${(value / 1000000).toStringAsFixed(1)}M';
+      final millions = value / 1000000;
+      final text = millions == millions.roundToDouble()
+          ? millions.toInt().toString()
+          : millions.toStringAsFixed(1);
+      return '$symbol${text}M';
     }
     if (value >= 1000) {
-      return '$symbol${(value / 1000).toStringAsFixed(1)}K';
+      final thousands = value / 1000;
+      final text = thousands == thousands.roundToDouble()
+          ? thousands.toInt().toString()
+          : thousands.toStringAsFixed(1);
+      return '$symbol${text}K';
     }
-    return '$symbol${value.toStringAsFixed(0)}';
+    return '$symbol${value.round()}';
   }
 }

@@ -49,5 +49,7 @@
 	<string>Attach photos to your transactions.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Take photos for your transactions.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Unlock Money Tracker with Face ID or Touch ID.</string>
 </dict>
 </plist>

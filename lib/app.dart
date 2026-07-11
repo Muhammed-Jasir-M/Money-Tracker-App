@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:money_tracker_app/core/currency/currency_scope.dart';
+import 'package:money_tracker_app/core/security/lock_gate.dart';
 import 'package:money_tracker_app/core/theme/theme.dart';
 import 'package:money_tracker_app/features/settings/bloc/settings_bloc.dart';
 import 'package:money_tracker_app/features/shell/view/main_screen.dart';
@@ -25,7 +26,9 @@ class MyApp extends StatelessWidget {
           builder: (context, child) {
             return CurrencyScope(
               symbol: currencySymbol,
-              child: child ?? const SizedBox.shrink(),
+              child: LockGate(
+                child: child ?? const SizedBox.shrink(),
+              ),
             );
           },
           home: const MainScreen(),

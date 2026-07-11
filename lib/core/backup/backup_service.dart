@@ -138,6 +138,8 @@ class BackupService {
         'themeMode': AppSettings.themeModeToString(settings.themeMode),
         'userName': settings.userName,
         'currencySymbol': settings.currencySymbol,
+        'lockEnabled': settings.lockEnabled,
+        'useBiometric': settings.useBiometric,
       };
 
   AppSettings _settingsFromJson(Map<String, dynamic> json) => AppSettings(
@@ -146,6 +148,8 @@ class BackupService {
         ),
         userName: json['userName'] as String? ?? '',
         currencySymbol: json['currencySymbol'] as String? ?? '₹',
+        lockEnabled: json['lockEnabled'] as bool? ?? false,
+        useBiometric: json['useBiometric'] as bool? ?? false,
       );
 
   Map<String, dynamic> _categoryToJson(CategoryModel category) => {
