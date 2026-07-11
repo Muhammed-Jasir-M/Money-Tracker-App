@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:money_tracker_app/core/constants/colors.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
 import 'package:money_tracker_app/core/utils/helper_functions.dart';
-import 'package:money_tracker_app/features/stats/view/expense_screen.dart';
-import 'package:money_tracker_app/features/stats/view/income_screen.dart';
+import 'package:money_tracker_app/data/models/enum/enum.dart';
+import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
+import 'package:money_tracker_app/features/stats/utils/stats_helpers.dart';
+import 'package:money_tracker_app/features/stats/widgets/category_breakdown_section.dart';
+import 'package:money_tracker_app/features/stats/widgets/stats_period_chips.dart';
+import 'package:money_tracker_app/features/stats/widgets/stats_summary_row.dart';
+import 'package:money_tracker_app/features/stats/widgets/stats_trend_chart.dart';
+import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
+import 'package:money_tracker_app/features/transactions/utils/transaction_filters.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
@@ -12,75 +19,89 @@ class StatsScreen extends StatefulWidget {
   State<StatsScreen> createState() => _StatsScreenState();
 }
 
-class _StatsScreenState extends State<StatsScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    tabController.dispose();
-    super.dispose();
-  }
+class _StatsScreenState extends State<StatsScreen> {
+  TransactionDateFilter _period = TransactionDateFilter.thisMonth;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = MHelperFunctions.isDarkMode(context);
+    return BlocConsumer<TransactionBloc, TransactionState>(
+      listener: (context, state) {
+        if (state is TransactionError) {
+          MHelperFunctions.showSnackBar(
+            message: state.message,
+            context: context,
+            title: 'Error',
+            bgColor: Colors.red,
+            icon: Icons.error,
+          );
+        }
+      },
+      builder: (context, state) {
+        if (state is TransactionLoading || state is TransactionInitial) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    return Padding(
-      padding: EdgeInsets.all(MSizes.defaultSpace),
-      child: Column(
-        children: [
-          const SizedBox(height: 5),
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(5),
-              color: isDark ? MColors.dark : MColors.light,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(5),
-              child: TabBar(
-                controller: tabController,
-                indicatorColor:
-                    isDark ? MColors.primary : MColors.secondary,
-                labelColor: isDark ? MColors.secondary : MColors.primary,
-                unselectedLabelColor:
-                    isDark ? MColors.secondary : MColors.primary,
-                dividerHeight: 0,
-                indicatorWeight: 2,
-                indicator: BoxDecoration(
-                  color: isDark
-                      ? MColors.bgDark.withValues(alpha: 1.0)
-                      : MColors.bgLight.withValues(alpha: 1.0),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicatorPadding: EdgeInsets.all(5),
-                tabs: const [
-                  Tab(text: 'Income'),
-                  Tab(text: 'Expense'),
-                ],
+        final transactions = switch (state) {
+          TransactionLoaded(:final transactions) => transactions,
+          TransactionSuccess(:final transactions) => transactions,
+          _ => <TransactionModel>[],
+        };
+
+        final periodTransactions =
+            StatsHelpers.filterByPeriod(transactions, _period);
+        final incomeTransactions = periodTransactions
+            .where((t) => t.type == TransactionType.income)
+            .toList();
+        final expenseTransactions = periodTransactions
+            .where((t) => t.type == TransactionType.expense)
+            .toList();
+
+        final totalIncome = StatsHelpers.sumAmount(incomeTransactions);
+        final totalExpense = StatsHelpers.sumAmount(expenseTransactions);
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(MSizes.defaultSpace),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Stats',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
-            ),
+              const SizedBox(height: MSizes.md),
+              StatsPeriodChips(
+                period: _period,
+                onChanged: (period) => setState(() => _period = period),
+              ),
+              const SizedBox(height: MSizes.md),
+              StatsSummaryRow(
+                totalIncome: totalIncome,
+                totalExpense: totalExpense,
+                net: totalIncome - totalExpense,
+              ),
+              const SizedBox(height: MSizes.spaceBtwSections),
+              CategoryBreakdownSection(
+                title: 'Expense by category',
+                transactions: expenseTransactions,
+                accentColor: Colors.red,
+                emptyMessage: 'Add an expense to see breakdown',
+              ),
+              const SizedBox(height: MSizes.spaceBtwSections),
+              CategoryBreakdownSection(
+                title: 'Income by category',
+                transactions: incomeTransactions,
+                accentColor: Colors.green,
+                emptyMessage: 'Add income to see breakdown',
+              ),
+              const SizedBox(height: MSizes.spaceBtwSections),
+              StatsTrendChart(transactions: periodTransactions),
+              const SizedBox(height: MSizes.defaultSpace),
+            ],
           ),
-          const SizedBox(height: 10),
-          Expanded(
-            child: TabBarView(
-              controller: tabController,
-              children: const [
-                IncomeScreen(),
-                ExpenseScreen(),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
