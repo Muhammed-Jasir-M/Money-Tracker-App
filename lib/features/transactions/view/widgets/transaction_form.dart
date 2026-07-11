@@ -112,12 +112,11 @@ class _MTransactionFormState extends State<MTransactionForm> {
     return BlocListener<TransactionBloc, TransactionState>(
       listener: (context, state) {
         if (state is TransactionLoading) {
-          setState(() => isLoading = true);
+          if (mounted) setState(() => isLoading = true);
         } else if (state is TransactionSuccess) {
-          setState(() => isLoading = false);
-          Navigator.pop(context);
+          if (mounted) Navigator.pop(context);
         } else if (state is TransactionError) {
-          setState(() => isLoading = false);
+          if (mounted) setState(() => isLoading = false);
           MHelperFunctions.showSnackBar(
             message: state.message,
             context: context,

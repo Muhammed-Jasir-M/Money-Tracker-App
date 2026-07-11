@@ -28,6 +28,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isEditingName = false;
 
   @override
+  void initState() {
+    super.initState();
+    final state = context.read<SettingsBloc>().state;
+    if (state is SettingsLoaded) {
+      _syncNameField(state.settings.userName);
+    }
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
@@ -271,7 +280,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: tabScreenAppBar(context, title: 'Settings'),
-      body: BlocBuilder<SettingsBloc, SettingsState>(
+      body: BlocConsumer<SettingsBloc, SettingsState>(
+      listener: (context, state) {
+        if (state is SettingsLoaded) {
+          _syncNameField(state.settings.userName);
+        }
+      },
       builder: (context, state) {
         if (state is SettingsLoading || state is SettingsInitial) {
           return const Center(child: CircularProgressIndicator());
@@ -283,7 +297,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
         final settings = (state as SettingsLoaded).settings;
         final isDark = MHelperFunctions.isDarkMode(context);
-        _syncNameField(settings.userName);
 
         return ListView(
           padding: const EdgeInsets.fromLTRB(

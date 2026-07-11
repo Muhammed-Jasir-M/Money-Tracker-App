@@ -39,4 +39,10 @@ class SettingsLocalDatasource {
   Future<void> saveCurrencySymbol(String currencySymbol) async {
     await _box.put(_currencySymbolKey, currencySymbol);
   }
+
+  Future<void> saveAll(AppSettings settings) async {
+    await saveThemeMode(settings.themeMode);
+    await saveUserName(settings.userName);
+    await saveCurrencySymbol(settings.currencySymbol);
+  }
 }
