@@ -64,7 +64,7 @@ class _StatsScreenState extends State<StatsScreen> {
             MSizes.defaultSpace,
             MSizes.defaultSpace,
             MSizes.defaultSpace,
-            88,
+            24,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,7 +105,6 @@ class _StatsScreenState extends State<StatsScreen> {
                 transactions: periodTransactions,
                 period: _period,
               ),
-              const SizedBox(height: MSizes.defaultSpace),
             ],
           ),
         );

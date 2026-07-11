@@ -42,7 +42,12 @@ class StatsTrendChart extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: _chartHeight,
-      padding: const EdgeInsets.all(MSizes.md),
+      padding: const EdgeInsets.fromLTRB(
+        MSizes.md,
+        MSizes.md,
+        MSizes.md,
+        MSizes.sm,
+      ),
       decoration: BoxDecoration(
         color: isDark ? MColors.dark : MColors.light,
         borderRadius: BorderRadius.circular(MSizes.borderRadiusLg),
@@ -64,7 +69,7 @@ class StatsTrendChart extends StatelessWidget {
               _LegendDot(color: Colors.red, label: 'Expense'),
             ],
           ),
-          const SizedBox(height: MSizes.sm),
+          const SizedBox(height: MSizes.xs),
           Expanded(
             child: points.isEmpty
                 ? Center(
@@ -147,7 +152,7 @@ class StatsTrendChart extends StatelessWidget {
                                 ),
                               );
                             },
-                            reservedSize: 28,
+                            reservedSize: 24,
                           ),
                         ),
                         leftTitles: AxisTitles(

@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:money_tracker_app/core/constants/colors.dart';
-import 'package:money_tracker_app/shared/widgets/appbar.dart';
+import 'package:money_tracker_app/core/constants/sizes.dart';
+import 'package:money_tracker_app/core/utils/helper_functions.dart';
 
 class MHomeAppbar extends StatelessWidget {
   const MHomeAppbar({
@@ -13,55 +14,81 @@ class MHomeAppbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MAppBar(
-      centerTitle: false,
-      titleSpacing: 8,
-      leadingWidget: Stack(
-        alignment: Alignment.center,
+    final isDark = MHelperFunctions.isDarkMode(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: MSizes.sm,
+        vertical: MSizes.sm,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? MColors.cardDark : MColors.cardLight,
+        borderRadius: BorderRadius.circular(MSizes.borderRadiusXl),
+        border: isDark
+            ? null
+            : Border.all(color: MColors.outline.withValues(alpha: 0.35)),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+      ),
+      child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.yellow[700],
+              color: MColors.primary.withValues(alpha: 0.15),
+            ),
+            child: Icon(
+              CupertinoIcons.person_fill,
+              color: MColors.primary,
+              size: 22,
             ),
           ),
-          Icon(
-            CupertinoIcons.person_fill,
-            color: Theme.of(context).colorScheme.outline,
-          ),
-        ],
-      ),
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Welcome back!',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: MColors.outline,
+          const SizedBox(width: MSizes.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome back!',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.color
+                            ?.withValues(alpha: 0.7),
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Jasir',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 5),
-          Text(
-            'Jasir',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+          IconButton(
+            onPressed: onOpenSettings,
+            tooltip: 'Settings',
+            icon: Icon(
+              CupertinoIcons.settings,
+              size: 26,
               color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ],
       ),
-      actions: [
-        IconButton(
-          onPressed: onOpenSettings,
-          icon: Icon(CupertinoIcons.settings, size: 35),
-          tooltip: 'Settings',
-        ),
-      ],
     );
   }
 }
