@@ -1,6 +1,9 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:money_tracker_app/core/backup/backup_service.dart';
 import 'package:money_tracker_app/core/constants/currencies.dart';
+import 'package:money_tracker_app/core/storage/receipt_storage.dart';
 import 'package:money_tracker_app/core/constants/colors.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
 import 'package:money_tracker_app/core/utils/helper_functions.dart';
@@ -26,15 +29,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _nameController = TextEditingController();
   String? _loadedName;
   bool _isEditingName = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final state = context.read<SettingsBloc>().state;
-    if (state is SettingsLoaded) {
-      _syncNameField(state.settings.userName);
-    }
-  }
+  bool _isBackupBusy = false;
 
   @override
   void dispose() {
@@ -72,6 +67,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!confirmed || !mounted) return;
 
     final transactionBloc = context.read<TransactionBloc>();
+    await ReceiptStorage().clearAll();
     await transactionBloc.repository.clearAll();
     transactionBloc.add(LoadTransaction());
 
@@ -134,11 +130,119 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  BackupService _backupService() {
+    return BackupService(
+      transactionRepository: context.read<TransactionBloc>().repository,
+      categoryRepository: context.read<CategoryBloc>().repository,
+      budgetRepository: context.read<BudgetBloc>().repository,
+      settingsRepository: context.read<SettingsBloc>().repository,
+    );
+  }
+
+  Future<void> _exportBackup() async {
+    setState(() => _isBackupBusy = true);
+    try {
+      await _backupService().exportAndShare();
+      if (!mounted) return;
+      MHelperFunctions.showSnackBar(
+        context: context,
+        title: 'Backup ready',
+        message: 'Choose where to save or share your backup file',
+        bgColor: Colors.green,
+        icon: Icons.check_circle,
+      );
+    } on BackupException catch (e) {
+      if (!mounted) return;
+      MHelperFunctions.showSnackBar(
+        context: context,
+        title: 'Export failed',
+        message: e.message,
+        bgColor: Colors.red,
+        icon: Icons.error,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      MHelperFunctions.showSnackBar(
+        context: context,
+        title: 'Export failed',
+        message: e.toString(),
+        bgColor: Colors.red,
+        icon: Icons.error,
+      );
+    } finally {
+      if (mounted) setState(() => _isBackupBusy = false);
+    }
+  }
+
+  Future<void> _restoreBackup() async {
+    final confirmed = await _confirmAction(
+      title: 'Restore backup?',
+      message:
+          'This will replace all transactions, categories, budgets, settings, and photos with the backup file.',
+      confirmLabel: 'Continue',
+      isDestructive: true,
+      icon: Icons.restore_outlined,
+    );
+    if (!confirmed || !mounted) return;
+
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+    );
+    if (!mounted) return;
+    if (result == null || result.files.single.path == null) return;
+
+    final backupService = _backupService();
+    final transactionBloc = context.read<TransactionBloc>();
+    final categoryBloc = context.read<CategoryBloc>();
+    final budgetBloc = context.read<BudgetBloc>();
+    final settingsBloc = context.read<SettingsBloc>();
+
+    setState(() => _isBackupBusy = true);
+    try {
+      await backupService.restoreFromFile(result.files.single.path!);
+
+      transactionBloc.add(LoadTransaction());
+      categoryBloc.add(LoadCategories());
+      budgetBloc.add(LoadBudgets());
+      settingsBloc.add(LoadSettings());
+
+      if (!mounted) return;
+      MHelperFunctions.showSnackBar(
+        context: context,
+        title: 'Restore complete',
+        message: 'Your data was restored from the backup file',
+        bgColor: Colors.green,
+        icon: Icons.check_circle,
+      );
+    } on BackupException catch (e) {
+      if (!mounted) return;
+      MHelperFunctions.showSnackBar(
+        context: context,
+        title: 'Restore failed',
+        message: e.message,
+        bgColor: Colors.red,
+        icon: Icons.error,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      MHelperFunctions.showSnackBar(
+        context: context,
+        title: 'Restore failed',
+        message: e.toString(),
+        bgColor: Colors.red,
+        icon: Icons.error,
+      );
+    } finally {
+      if (mounted) setState(() => _isBackupBusy = false);
+    }
+  }
+
   Future<void> _resetAllData() async {
     final confirmed = await _confirmAction(
       title: 'Reset all data?',
       message:
-          'This will delete all transactions, categories, and budgets. This cannot be undone.',
+          'This will delete all transactions, categories, budgets, and photos. This cannot be undone.',
       confirmLabel: 'Reset',
       isDestructive: true,
       icon: Icons.delete_forever_outlined,
@@ -148,6 +252,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final transactionBloc = context.read<TransactionBloc>();
     final categoryBloc = context.read<CategoryBloc>();
     final budgetBloc = context.read<BudgetBloc>();
+    await ReceiptStorage().clearAll();
     await transactionBloc.repository.clearAll();
     await categoryBloc.repository.clearAll();
     await budgetBloc.repository.clearAll();
@@ -280,12 +385,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: tabScreenAppBar(context, title: 'Settings'),
-      body: BlocConsumer<SettingsBloc, SettingsState>(
-      listener: (context, state) {
-        if (state is SettingsLoaded) {
-          _syncNameField(state.settings.userName);
-        }
-      },
+      body: BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, state) {
         if (state is SettingsLoading || state is SettingsInitial) {
           return const Center(child: CircularProgressIndicator());
@@ -297,6 +397,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
         final settings = (state as SettingsLoaded).settings;
         final isDark = MHelperFunctions.isDarkMode(context);
+        _syncNameField(settings.userName);
 
         return ListView(
           padding: const EdgeInsets.fromLTRB(
@@ -420,6 +521,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         const ManageBudgetsScreen(),
                       );
                     },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: MSizes.md),
+            _SettingsSectionCard(
+              isDark: isDark,
+              title: 'Backup & restore',
+              child: Column(
+                children: [
+                  _SettingsTile(
+                    icon: Icons.upload_file_outlined,
+                    title: 'Export backup',
+                    subtitle: _isBackupBusy
+                        ? 'Please wait...'
+                        : 'Save transactions, categories, budgets, settings, and photos',
+                    onTap: _isBackupBusy ? null : _exportBackup,
+                  ),
+                  const SizedBox(height: MSizes.sm),
+                  _SettingsTile(
+                    icon: Icons.restore_outlined,
+                    title: 'Restore backup',
+                    subtitle: 'Replace current data from a backup JSON file',
+                    onTap: _isBackupBusy ? null : _restoreBackup,
                   ),
                 ],
               ),

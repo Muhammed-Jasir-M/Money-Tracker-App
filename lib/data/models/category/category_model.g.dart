@@ -21,7 +21,7 @@ class CategoryModelAdapter extends TypeAdapter<CategoryModel> {
       title: fields[1] as String,
       iconIndex: fields[2] as int,
       color: fields[3] as int,
-      type: fields[4] as TransactionType? ?? TransactionType.expense,
+      type: fields[4] as TransactionType,
     );
   }
 

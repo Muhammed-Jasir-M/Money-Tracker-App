@@ -24,6 +24,10 @@ class TransactionModel extends HiveObject {
   @HiveField(5)
   String note;
 
+  /// Local file path to an attached photo.
+  @HiveField(6)
+  String receiptPath;
+
   TransactionModel({
     required this.tId,
     required this.category,
@@ -31,7 +35,10 @@ class TransactionModel extends HiveObject {
     required this.dateTime,
     required this.type,
     this.note = '',
+    this.receiptPath = '',
   });
+
+  bool get hasReceipt => receiptPath.isNotEmpty;
 
   TransactionModel copyWith({
     String? tId,
@@ -40,6 +47,7 @@ class TransactionModel extends HiveObject {
     double? amount,
     DateTime? dateTime,
     String? note,
+    String? receiptPath,
   }) {
     return TransactionModel(
       tId: tId ?? this.tId,
@@ -48,6 +56,7 @@ class TransactionModel extends HiveObject {
       amount: amount ?? this.amount,
       dateTime: dateTime ?? this.dateTime,
       note: note ?? this.note,
+      receiptPath: receiptPath ?? this.receiptPath,
     );
   }
 }

@@ -9,11 +9,14 @@ import 'package:money_tracker_app/core/utils/helper_functions.dart';
 import 'package:money_tracker_app/data/models/category/category_model.dart';
 import 'package:money_tracker_app/data/models/enum/enum.dart';
 import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
+import 'package:money_tracker_app/core/storage/receipt_storage.dart';
 import 'package:money_tracker_app/features/categories/bloc/category_bloc.dart';
 import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
 import 'package:money_tracker_app/features/transactions/view/widgets/category_picker_sheet.dart';
 import 'package:money_tracker_app/shared/widgets/button.dart';
+import 'package:money_tracker_app/shared/widgets/receipt_attachment_field.dart';
 import 'package:money_tracker_app/shared/widgets/text_form_field.dart';
+import 'package:image_picker/image_picker.dart';
 
 class MTransactionForm extends StatefulWidget {
   const MTransactionForm({
@@ -40,6 +43,11 @@ class _MTransactionFormState extends State<MTransactionForm> {
   CategoryModel _selectedCategory = CategoryModel.empty();
   DateTime _selectedDateTime = DateTime.now();
 
+  final _receiptStorage = ReceiptStorage();
+  String? _pendingReceiptPath;
+  String? _existingReceiptPath;
+  bool _receiptRemoved = false;
+
   bool isLoading = false;
 
   @override
@@ -56,6 +64,9 @@ class _MTransactionFormState extends State<MTransactionForm> {
       _noteController.text = transaction.note;
       _selectedDateTime = transaction.dateTime;
       _transactionType = transaction.type;
+      _existingReceiptPath = transaction.receiptPath.isNotEmpty
+          ? transaction.receiptPath
+          : null;
     }
   }
 
@@ -104,6 +115,44 @@ class _MTransactionFormState extends State<MTransactionForm> {
     });
   }
 
+  String? get _receiptPreviewPath {
+    if (_receiptRemoved) return null;
+    return _pendingReceiptPath ?? _existingReceiptPath;
+  }
+
+  Future<void> _pickReceipt(ImageSource source) async {
+    final path = await pickReceiptImage(source);
+    if (!mounted || path == null) return;
+    setState(() {
+      _pendingReceiptPath = path;
+      _receiptRemoved = false;
+    });
+  }
+
+  void _removeReceipt() {
+    setState(() {
+      _pendingReceiptPath = null;
+      _receiptRemoved = true;
+    });
+  }
+
+  Future<String> _resolveReceiptPath(String transactionId) async {
+    if (_receiptRemoved) {
+      await _receiptStorage.deleteForTransaction(transactionId);
+      return '';
+    }
+
+    if (_pendingReceiptPath != null) {
+      final saved = await _receiptStorage.saveFromPath(
+        transactionId,
+        _pendingReceiptPath!,
+      );
+      return saved ?? '';
+    }
+
+    return _existingReceiptPath ?? '';
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = MHelperFunctions.isDarkMode(context);
@@ -112,11 +161,12 @@ class _MTransactionFormState extends State<MTransactionForm> {
     return BlocListener<TransactionBloc, TransactionState>(
       listener: (context, state) {
         if (state is TransactionLoading) {
-          if (mounted) setState(() => isLoading = true);
+          setState(() => isLoading = true);
         } else if (state is TransactionSuccess) {
-          if (mounted) Navigator.pop(context);
+          setState(() => isLoading = false);
+          Navigator.pop(context);
         } else if (state is TransactionError) {
-          if (mounted) setState(() => isLoading = false);
+          setState(() => isLoading = false);
           MHelperFunctions.showSnackBar(
             message: state.message,
             context: context,
@@ -263,8 +313,17 @@ class _MTransactionFormState extends State<MTransactionForm> {
               MTextFormField(
                 controller: _noteController,
                 label: 'Note',
-                hintText: 'Optional',
+                hintText: 'Add details about this transaction',
                 prefixIcon: FontAwesomeIcons.noteSticky,
+                maxLines: 4,
+                minLines: 2,
+              ),
+              const SizedBox(height: MSizes.spaceBtwItems),
+              ReceiptAttachmentField(
+                previewPath: _receiptPreviewPath,
+                onPickGallery: () => _pickReceipt(ImageSource.gallery),
+                onPickCamera: () => _pickReceipt(ImageSource.camera),
+                onRemove: _removeReceipt,
               ),
               const SizedBox(height: MSizes.spaceBtwSections),
               Center(
@@ -289,7 +348,7 @@ class _MTransactionFormState extends State<MTransactionForm> {
     );
   }
 
-  void _validateAndSubmitTask() {
+  void _validateAndSubmitTask() async {
     if (_selectedCategory == CategoryModel.empty()) {
       MHelperFunctions.showSnackBar(
         message: 'Please select a category',
@@ -316,23 +375,32 @@ class _MTransactionFormState extends State<MTransactionForm> {
     final bloc = context.read<TransactionBloc>();
 
     if (widget.isEditing && widget.transaction != null) {
+      final receiptPath = await _resolveReceiptPath(widget.transaction!.tId);
+      if (!mounted) return;
+
       widget.transaction!
         ..category = _selectedCategory
         ..amount = amount
         ..dateTime = _selectedDateTime
         ..type = _transactionType
-        ..note = _noteController.text.trim();
+        ..note = _noteController.text.trim()
+        ..receiptPath = receiptPath;
       bloc.add(UpdateTransaction(widget.transaction!));
     } else {
+      final transactionId = DateTime.now().millisecondsSinceEpoch.toString();
+      final receiptPath = await _resolveReceiptPath(transactionId);
+      if (!mounted) return;
+
       bloc.add(
         AddTransaction(
           TransactionModel(
-            tId: DateTime.now().millisecondsSinceEpoch.toString(),
+            tId: transactionId,
             category: _selectedCategory,
             amount: amount,
             dateTime: _selectedDateTime,
             type: _transactionType,
             note: _noteController.text.trim(),
+            receiptPath: receiptPath,
           ),
         ),
       );

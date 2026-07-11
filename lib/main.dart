@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:money_tracker_app/app.dart';
 import 'package:money_tracker_app/core/bloc/simple_bloc_observer.dart';
+import 'package:money_tracker_app/core/storage/hive_box_helper.dart';
 import 'package:money_tracker_app/data/datasources/budget_local_datasource.dart';
 import 'package:money_tracker_app/data/datasources/category_local_datasource.dart';
 import 'package:money_tracker_app/data/datasources/settings_local_datasource.dart';
@@ -32,10 +33,11 @@ Future<void> main() async {
   Hive.registerAdapter(TransactionModelAdapter());
   Hive.registerAdapter(TransactionTypeAdapter());
 
-  final transactionBox = await Hive.openBox<TransactionModel>('transactions');
-  final categoryBox = await Hive.openBox<CategoryModel>('categories');
-  final budgetBox = await Hive.openBox<BudgetModel>('budgets');
-  final settingsBox = await Hive.openBox('app_settings');
+  final transactionBox =
+      await openBoxSafely<TransactionModel>('transactions');
+  final categoryBox = await openBoxSafely<CategoryModel>('categories');
+  final budgetBox = await openBoxSafely<BudgetModel>('budgets');
+  final settingsBox = await openUntypedBoxSafely('app_settings');
 
   final transactionRepository = TransactionRepository(
     datasource: TransactionLocalDatasource(box: transactionBox),

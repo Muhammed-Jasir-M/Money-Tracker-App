@@ -46,7 +46,6 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
 
   @override
   void dispose() {
-    titleController.removeListener(_onTitleChanged);
     titleController.dispose();
     super.dispose();
   }

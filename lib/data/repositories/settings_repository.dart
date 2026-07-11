@@ -30,4 +30,9 @@ class SettingsRepository {
     await _datasource.saveCurrencySymbol(currencySymbol);
     return _datasource.getSettings();
   }
+
+  Future<AppSettings> restoreSettings(AppSettings settings) async {
+    await _datasource.saveAll(settings);
+    return _datasource.getSettings();
+  }
 }

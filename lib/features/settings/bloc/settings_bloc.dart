@@ -29,6 +29,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
 
   final SettingsRepository _repository;
 
+  SettingsRepository get repository => _repository;
+
   Future<void> _onLoadSettings(
     LoadSettings event,
     Emitter<SettingsState> emit,

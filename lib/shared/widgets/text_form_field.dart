@@ -24,6 +24,8 @@ class MTextFormField extends StatelessWidget {
     this.textAlign = TextAlign.start,
     this.style,
     this.contentPadding,
+    this.maxLines = 1,
+    this.minLines,
   });
 
   final TextEditingController? controller;
@@ -42,6 +44,8 @@ class MTextFormField extends StatelessWidget {
   final TextAlign textAlign;
   final TextStyle? style;
   final EdgeInsetsGeometry? contentPadding;
+  final int? maxLines;
+  final int? minLines;
 
   @override
   Widget build(BuildContext context) {
@@ -53,10 +57,13 @@ class MTextFormField extends StatelessWidget {
       readOnly: readOnly,
       controller: controller,
       keyboardType: keyboardType,
-      textAlignVertical: TextAlignVertical.center,
+      textAlignVertical:
+          (maxLines ?? 1) > 1 ? TextAlignVertical.top : TextAlignVertical.center,
       textAlign: textAlign,
       style: style,
       onChanged: onChanged,
+      maxLines: maxLines,
+      minLines: minLines,
       decoration: InputDecoration(
         hintText: hintText,
         isDense: isDense,

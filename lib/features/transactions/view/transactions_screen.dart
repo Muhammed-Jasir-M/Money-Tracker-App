@@ -120,6 +120,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   void _openFiltersSortSheet() {
     FocusManager.instance.primaryFocus?.unfocus();
 
+    final categoryController = TextEditingController(
+      text: _filters.category?.title ?? '',
+    );
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -127,21 +131,31 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
+            void syncCategoryField() {
+              categoryController.text = _filters.category?.title ?? '';
+            }
+
+            void onFiltersChanged(TransactionFilters filters) {
+              _updateFilters(filters);
+              syncCategoryField();
+              setSheetState(() {});
+            }
+
             Future<void> onClearFilters() async {
               await _confirmClearFilters();
               if (context.mounted) {
+                syncCategoryField();
                 setSheetState(() {});
               }
             }
 
             return _TransactionFiltersSortSheet(
               filters: _filters,
-              onChanged: (filters) {
-                _updateFilters(filters);
-                setSheetState(() {});
-              },
+              categoryController: categoryController,
+              onChanged: onFiltersChanged,
               onTypeChanged: (type) {
                 _applyTypeFilter(type);
+                syncCategoryField();
                 setSheetState(() {});
               },
               onClear: _filters.hasActiveFilters ? onClearFilters : null,
@@ -149,7 +163,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           },
         );
       },
-    );
+    ).whenComplete(categoryController.dispose);
   }
 
   bool get _hasCustomSort =>
@@ -343,12 +357,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 class _TransactionFiltersSortSheet extends StatelessWidget {
   const _TransactionFiltersSortSheet({
     required this.filters,
+    required this.categoryController,
     required this.onChanged,
     required this.onTypeChanged,
     this.onClear,
   });
 
   final TransactionFilters filters;
+  final TextEditingController categoryController;
   final ValueChanged<TransactionFilters> onChanged;
   final ValueChanged<TransactionType?> onTypeChanged;
   final Future<void> Function()? onClear;
@@ -446,8 +462,15 @@ class _TransactionFiltersSortSheet extends StatelessWidget {
                 onChanged: onChanged,
               ),
               const SizedBox(height: MSizes.md),
-              _CategoryFilterField(
-                filters: filters,
+              MTextFormField(
+                controller: categoryController,
+                label: 'Category',
+                hintText: 'All categories',
+                prefixIcon: filters.category != null
+                    ? categoryIcons[filters.category!.iconIndex]
+                    : Icons.category_outlined,
+                readOnly: true,
+                suffixIcon: Icons.chevron_right,
                 onTap: () => _openCategoryFilter(context),
               ),
               if (onClear != null) ...[
@@ -473,61 +496,6 @@ class _TransactionFiltersSortSheet extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _CategoryFilterField extends StatefulWidget {
-  const _CategoryFilterField({
-    required this.filters,
-    required this.onTap,
-  });
-
-  final TransactionFilters filters;
-  final VoidCallback onTap;
-
-  @override
-  State<_CategoryFilterField> createState() => _CategoryFilterFieldState();
-}
-
-class _CategoryFilterFieldState extends State<_CategoryFilterField> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(
-      text: widget.filters.category?.title ?? '',
-    );
-  }
-
-  @override
-  void didUpdateWidget(_CategoryFilterField oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    final nextText = widget.filters.category?.title ?? '';
-    if (_controller.text != nextText) {
-      _controller.text = nextText;
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MTextFormField(
-      controller: _controller,
-      label: 'Category',
-      hintText: 'All categories',
-      prefixIcon: widget.filters.category != null
-          ? categoryIcons[widget.filters.category!.iconIndex]
-          : Icons.category_outlined,
-      readOnly: true,
-      suffixIcon: Icons.chevron_right,
-      onTap: widget.onTap,
     );
   }
 }

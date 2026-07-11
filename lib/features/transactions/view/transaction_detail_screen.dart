@@ -13,6 +13,26 @@ import 'package:money_tracker_app/features/transactions/view/edit_transaction_sc
 import 'package:money_tracker_app/shared/widgets/appbar.dart';
 import 'package:money_tracker_app/shared/widgets/button.dart';
 import 'package:money_tracker_app/shared/widgets/confirm_dialog.dart';
+import 'package:money_tracker_app/shared/widgets/receipt_attachment_field.dart';
+import 'package:money_tracker_app/core/storage/receipt_storage.dart';
+
+Future<void> _confirmDeleteTransaction(
+  BuildContext context,
+  TransactionModel transaction,
+) async {
+  final confirmed = await MConfirmDialog.show(
+    context: context,
+    title: 'Delete transaction?',
+    message: 'This action cannot be undone.',
+    confirmLabel: 'Delete',
+    isDestructive: true,
+  );
+  if (!confirmed || !context.mounted) return;
+  context.read<TransactionBloc>().add(DeleteTransaction(transaction));
+  if (context.mounted) {
+    Navigator.pop(context);
+  }
+}
 
 class TransactionDetailScreen extends StatelessWidget {
   const TransactionDetailScreen({
@@ -22,14 +42,23 @@ class TransactionDetailScreen extends StatelessWidget {
 
   final TransactionModel transaction;
 
+  TransactionModel _resolveTransaction(TransactionState state) {
+    final transactions = switch (state) {
+      TransactionLoaded(:final transactions) => transactions,
+      TransactionSuccess(:final transactions) => transactions,
+      _ => null,
+    };
+
+    if (transactions == null) return transaction;
+
+    for (final item in transactions) {
+      if (item.tId == transaction.tId) return item;
+    }
+    return transaction;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isDark = MHelperFunctions.isDarkMode(context);
-    final subtitleColor =
-        isDark ? const Color(0xFF9E9E9E) : MColors.darkerGrey;
-    final isIncome = transaction.type == TransactionType.income;
-    final symbol = CurrencyScope.of(context);
-
     return BlocListener<TransactionBloc, TransactionState>(
       listener: (context, state) {
         if (state is TransactionError) {
@@ -53,7 +82,31 @@ class TransactionDetailScreen extends StatelessWidget {
           }
         }
       },
-      child: Scaffold(
+      child: BlocBuilder<TransactionBloc, TransactionState>(
+        builder: (context, state) {
+          final current = _resolveTransaction(state);
+          return _TransactionDetailBody(transaction: current);
+        },
+      ),
+    );
+  }
+}
+
+class _TransactionDetailBody extends StatelessWidget {
+  const _TransactionDetailBody({required this.transaction});
+
+  final TransactionModel transaction;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = MHelperFunctions.isDarkMode(context);
+    final subtitleColor =
+        isDark ? const Color(0xFF9E9E9E) : MColors.darkerGrey;
+    final isIncome = transaction.type == TransactionType.income;
+    final symbol = CurrencyScope.of(context);
+    final receiptFile = ReceiptStorage().fileAt(transaction.receiptPath);
+
+    return Scaffold(
         appBar: MAppBar(
           showBackArrow: true,
           title: Text(
@@ -140,6 +193,33 @@ class TransactionDetailScreen extends StatelessWidget {
                   value: transaction.note,
                   labelColor: subtitleColor,
                 ),
+              if (receiptFile != null) ...[
+                const SizedBox(height: MSizes.sm),
+                Text(
+                  'Photo',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: subtitleColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: MSizes.sm),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => openReceiptPreview(context, receiptFile.path),
+                    borderRadius: BorderRadius.circular(12),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(
+                        receiptFile,
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: MSizes.spaceBtwSections),
               Row(
                 children: [
@@ -162,7 +242,7 @@ class TransactionDetailScreen extends StatelessWidget {
                       btnTitle: 'Delete',
                       width: double.infinity,
                       height: 48,
-                      onTap: () => _confirmDelete(context),
+                      onTap: () => _confirmDeleteTransaction(context, transaction),
                     ),
                   ),
                 ],
@@ -170,23 +250,7 @@ class TransactionDetailScreen extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Future<void> _confirmDelete(BuildContext context) async {
-    final confirmed = await MConfirmDialog.show(
-      context: context,
-      title: 'Delete transaction?',
-      message: 'This action cannot be undone.',
-      confirmLabel: 'Delete',
-      isDestructive: true,
-    );
-    if (!confirmed || !context.mounted) return;
-    context.read<TransactionBloc>().add(DeleteTransaction(transaction));
-    if (context.mounted) {
-      Navigator.pop(context);
-    }
+      );
   }
 }
 
