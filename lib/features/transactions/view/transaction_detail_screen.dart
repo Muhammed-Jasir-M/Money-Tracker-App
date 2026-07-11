@@ -10,6 +10,7 @@ import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.da
 import 'package:money_tracker_app/features/transactions/view/edit_transaction_screen.dart';
 import 'package:money_tracker_app/shared/widgets/appbar.dart';
 import 'package:money_tracker_app/shared/widgets/button.dart';
+import 'package:money_tracker_app/shared/widgets/confirm_dialog.dart';
 
 class TransactionDetailScreen extends StatelessWidget {
   const TransactionDetailScreen({
@@ -166,36 +167,19 @@ class TransactionDetailScreen extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context) {
-    showDialog<void>(
+  Future<void> _confirmDelete(BuildContext context) async {
+    final confirmed = await MConfirmDialog.show(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Delete transaction?'),
-          content: const Text(
-            'This action cannot be undone.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-                context
-                    .read<TransactionBloc>()
-                    .add(DeleteTransaction(transaction));
-              },
-              child: const Text(
-                'Delete',
-                style: TextStyle(color: Colors.red),
-              ),
-            ),
-          ],
-        );
-      },
+      title: 'Delete transaction?',
+      message: 'This action cannot be undone.',
+      confirmLabel: 'Delete',
+      isDestructive: true,
     );
+    if (!confirmed || !context.mounted) return;
+    context.read<TransactionBloc>().add(DeleteTransaction(transaction));
+    if (context.mounted) {
+      Navigator.pop(context);
+    }
   }
 }
 

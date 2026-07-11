@@ -9,6 +9,7 @@ import 'package:money_tracker_app/features/categories/bloc/category_bloc.dart';
 import 'package:money_tracker_app/features/categories/view/add_category_screen.dart';
 import 'package:money_tracker_app/shared/widgets/appbar.dart';
 import 'package:money_tracker_app/shared/widgets/button.dart';
+import 'package:money_tracker_app/shared/widgets/confirm_dialog.dart';
 import 'package:money_tracker_app/shared/widgets/transaction_tile.dart';
 
 class ManageCategoriesScreen extends StatelessWidget {
@@ -40,34 +41,16 @@ class ManageCategoriesScreen extends StatelessWidget {
     }
   }
 
-  void _confirmDelete(BuildContext context, CategoryModel category) {
-    showDialog<void>(
+  Future<void> _confirmDelete(BuildContext context, CategoryModel category) async {
+    final confirmed = await MConfirmDialog.show(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Delete category?'),
-          content: Text(
-            'Delete "${category.title}"? This cannot be undone.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-                context.read<CategoryBloc>().add(DeleteCategory(category));
-              },
-              child: const Text(
-                'Delete',
-                style: TextStyle(color: Colors.red),
-              ),
-            ),
-          ],
-        );
-      },
+      title: 'Delete category?',
+      message: 'Delete "${category.title}"? This cannot be undone.',
+      confirmLabel: 'Delete',
+      isDestructive: true,
     );
+    if (!confirmed || !context.mounted) return;
+    context.read<CategoryBloc>().add(DeleteCategory(category));
   }
 
   @override

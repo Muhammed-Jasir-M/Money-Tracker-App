@@ -23,6 +23,10 @@ class TransactionLocalDatasource {
     await _box.delete(transaction.key);
   }
 
+  Future<void> clearAll() async {
+    await _box.clear();
+  }
+
   Future<void> syncCategory(CategoryModel category) async {
     for (final transaction in _box.values) {
       if (transaction.category.cId == category.cId) {

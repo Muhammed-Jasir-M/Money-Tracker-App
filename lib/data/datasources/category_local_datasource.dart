@@ -21,4 +21,8 @@ class CategoryLocalDatasource {
   Future<void> delete(CategoryModel category) async {
     await _box.delete(category.key);
   }
+
+  Future<void> clearAll() async {
+    await _box.clear();
+  }
 }

@@ -15,3 +15,12 @@ class UpdateThemeMode extends SettingsEvent {
   @override
   List<Object?> get props => [themeMode];
 }
+
+class UpdateUserName extends SettingsEvent {
+  UpdateUserName(this.userName);
+
+  final String userName;
+
+  @override
+  List<Object?> get props => [userName];
+}

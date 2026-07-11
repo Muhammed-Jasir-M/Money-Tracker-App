@@ -7,7 +7,11 @@ import 'package:money_tracker_app/core/theme/text_theme.dart';
 class MAppTheme {
   MAppTheme._();
 
-  static ButtonStyle _segmentedStyle(Color accent, Color base) {
+  static ButtonStyle _segmentedStyle({
+    required Color accent,
+    required Color base,
+    required Color labelColor,
+  }) {
     return ButtonStyle(
       backgroundColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
@@ -17,9 +21,9 @@ class MAppTheme {
       }),
       foregroundColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
-          return accent;
+          return labelColor;
         }
-        return null;
+        return labelColor.withValues(alpha: 0.65);
       }),
       side: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
@@ -50,7 +54,11 @@ class MAppTheme {
       outline: Color(0xFFE2E2E2),
     ),
     segmentedButtonTheme: SegmentedButtonThemeData(
-      style: _segmentedStyle(MColors.primary, MColors.white),
+      style: _segmentedStyle(
+        accent: MColors.primary,
+        base: MColors.white,
+        labelColor: MColors.black,
+      ),
     ),
     listTileTheme: const ListTileThemeData(
       iconColor: MColors.primary,
@@ -80,7 +88,11 @@ class MAppTheme {
       outline: Color(0xFF3A3A3A),
     ),
     segmentedButtonTheme: SegmentedButtonThemeData(
-      style: _segmentedStyle(MColors.primary, MColors.cardDark),
+      style: _segmentedStyle(
+        accent: MColors.primary,
+        base: MColors.cardDark,
+        labelColor: MColors.white,
+      ),
     ),
     listTileTheme: const ListTileThemeData(
       iconColor: MColors.primary,

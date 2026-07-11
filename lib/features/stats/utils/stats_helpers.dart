@@ -1,15 +1,18 @@
+import 'package:money_tracker_app/data/models/category/category_model.dart';
 import 'package:money_tracker_app/data/models/enum/enum.dart';
 import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
 import 'package:money_tracker_app/features/transactions/utils/transaction_filters.dart';
 
 class CategoryBreakdownItem {
   const CategoryBreakdownItem({
+    required this.category,
     required this.title,
     required this.color,
     required this.amount,
     required this.percentage,
   });
 
+  final CategoryModel category;
   final String title;
   final int color;
   final double amount;
@@ -49,19 +52,19 @@ class StatsHelpers {
       return [];
     }
 
-    final categoryMap = <String, ({double amount, int color})>{};
+    final categoryMap = <String, ({double amount, CategoryModel category})>{};
     for (final transaction in transactions) {
       final title = transaction.category.title;
       final existing = categoryMap[title];
       if (existing == null) {
         categoryMap[title] = (
           amount: transaction.amount,
-          color: transaction.category.color,
+          category: transaction.category,
         );
       } else {
         categoryMap[title] = (
           amount: existing.amount + transaction.amount,
-          color: existing.color,
+          category: existing.category,
         );
       }
     }
@@ -70,8 +73,9 @@ class StatsHelpers {
     return categoryMap.entries
         .map(
           (entry) => CategoryBreakdownItem(
+            category: entry.value.category,
             title: entry.key,
-            color: entry.value.color,
+            color: entry.value.category.color,
             amount: entry.value.amount,
             percentage: total > 0 ? (entry.value.amount / total) * 100 : 0,
           ),

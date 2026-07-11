@@ -8,11 +8,13 @@ class CategoryDonutChart extends StatelessWidget {
     required this.items,
     required this.total,
     required this.accentColor,
+    this.onSliceTap,
   });
 
   final List<CategoryBreakdownItem> items;
   final double total;
   final Color accentColor;
+  final ValueChanged<CategoryBreakdownItem>? onSliceTap;
 
   static const _chartHeight = 196.0;
   static const _sectionRadius = 72.0;
@@ -20,10 +22,10 @@ class CategoryDonutChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sections = items.map((item) {
+    final sections = items.asMap().entries.map((entry) {
       return PieChartSectionData(
-        color: Color(item.color),
-        value: item.amount,
+        color: Color(entry.value.color),
+        value: entry.value.amount,
         radius: _sectionRadius,
         showTitle: false,
       );
@@ -51,40 +53,62 @@ class CategoryDonutChart extends StatelessWidget {
                     centerSpaceRadius: _centerSpaceRadius,
                     sectionsSpace: 2,
                     startDegreeOffset: -90,
+                    pieTouchData: PieTouchData(
+                      enabled: onSliceTap != null,
+                      touchCallback: (event, response) {
+                        if (!event.isInterestedForInteractions ||
+                            response == null ||
+                            onSliceTap == null) {
+                          return;
+                        }
+                        final index =
+                            response.touchedSection?.touchedSectionIndex;
+                        if (index == null ||
+                            index < 0 ||
+                            index >= items.length) {
+                          return;
+                        }
+                        onSliceTap!(items[index]);
+                      },
+                    ),
                   ),
                   duration: const Duration(milliseconds: 900),
                   curve: Curves.easeOutCubic,
                 ),
-                SizedBox(
-                  width: _centerSpaceRadius * 2 - 4,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Total',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.color
-                                        ?.withValues(alpha: 0.7),
-                                  ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '\u{20B9}${total.toStringAsFixed(0)}',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: accentColor,
-                              ),
-                        ),
-                      ],
+                IgnorePointer(
+                  child: SizedBox(
+                    width: _centerSpaceRadius * 2 - 4,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Total',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.color
+                                      ?.withValues(alpha: 0.7),
+                                ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '\u{20B9}${total.toStringAsFixed(0)}',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: accentColor,
+                                ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

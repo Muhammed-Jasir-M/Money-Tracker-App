@@ -25,6 +25,8 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   final CategoryRepository _repository;
   final TransactionRepository _transactionRepository;
 
+  CategoryRepository get repository => _repository;
+
   Future<void> _onLoadCategories(
     LoadCategories event,
     Emitter<CategoryState> emit,

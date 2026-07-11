@@ -9,6 +9,7 @@ import 'package:money_tracker_app/data/models/enum/enum.dart';
 import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
 import 'package:money_tracker_app/features/categories/bloc/category_bloc.dart';
 import 'package:money_tracker_app/features/settings/view/manage_categories_screen.dart';
+import 'package:money_tracker_app/features/shell/models/transactions_navigation_request.dart';
 import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
 import 'package:money_tracker_app/features/transactions/utils/transaction_filters.dart';
 import 'package:money_tracker_app/features/transactions/view/transaction_detail_screen.dart';
@@ -18,7 +19,14 @@ import 'package:money_tracker_app/shared/widgets/text_form_field.dart';
 import 'package:money_tracker_app/shared/widgets/transaction_tile.dart';
 
 class TransactionsScreen extends StatefulWidget {
-  const TransactionsScreen({super.key});
+  const TransactionsScreen({
+    super.key,
+    this.navigationRequest,
+    this.onNavigationRequestHandled,
+  });
+
+  final TransactionsNavigationRequest? navigationRequest;
+  final VoidCallback? onNavigationRequestHandled;
 
   @override
   State<TransactionsScreen> createState() => _TransactionsScreenState();
@@ -27,6 +35,56 @@ class TransactionsScreen extends StatefulWidget {
 class _TransactionsScreenState extends State<TransactionsScreen> {
   TransactionFilters _filters = const TransactionFilters();
   bool _filtersExpanded = false;
+  late final TextEditingController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+    _applyNavigationRequest(fromInit: true);
+  }
+
+  @override
+  void didUpdateWidget(TransactionsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.navigationRequest != oldWidget.navigationRequest) {
+      _applyNavigationRequest();
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _applyNavigationRequest({bool fromInit = false}) {
+    final request = widget.navigationRequest;
+    if (request == null) {
+      return;
+    }
+
+    void apply() {
+      _filters = request.filters;
+      _filtersExpanded = request.expandFilters;
+      _searchController.text = request.filters.searchQuery;
+    }
+
+    if (fromInit) {
+      apply();
+    } else {
+      setState(apply);
+    }
+
+    final onHandled = widget.onNavigationRequestHandled;
+    if (onHandled != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          onHandled();
+        }
+      });
+    }
+  }
 
   void _updateFilters(TransactionFilters filters) {
     setState(() => _filters = filters);
@@ -122,6 +180,33 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                MSizes.defaultSpace,
+                MSizes.sm,
+                MSizes.defaultSpace,
+                MSizes.sm,
+              ),
+              child: MTextFormField(
+                controller: _searchController,
+                label: 'Search',
+                hintText: 'Note, amount, or category',
+                prefixIcon: Icons.search,
+                suffixIcon: _filters.searchQuery.isNotEmpty
+                    ? Icons.close
+                    : null,
+                onIconPressed: _filters.searchQuery.isNotEmpty
+                    ? () {
+                        _searchController.clear();
+                        _updateFilters(
+                          _filters.copyWith(searchQuery: ''),
+                        );
+                      }
+                    : null,
+                onChanged: (value) =>
+                    _updateFilters(_filters.copyWith(searchQuery: value)),
+              ),
+            ),
             if (_filtersExpanded) ...[
               const SizedBox(height: MSizes.sm),
               _TransactionFiltersPanel(
@@ -139,6 +224,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () {
+                        _searchController.clear();
                         _updateFilters(const TransactionFilters());
                       },
                       child: const Text('Clear filters'),

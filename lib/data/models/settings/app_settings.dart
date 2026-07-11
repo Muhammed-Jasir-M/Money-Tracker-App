@@ -4,13 +4,21 @@ import 'package:flutter/material.dart';
 class AppSettings extends Equatable {
   const AppSettings({
     this.themeMode = ThemeMode.system,
+    this.userName = '',
   });
 
   final ThemeMode themeMode;
+  final String userName;
 
-  AppSettings copyWith({ThemeMode? themeMode}) {
+  String get displayName => userName.trim().isEmpty ? 'there' : userName.trim();
+
+  AppSettings copyWith({
+    ThemeMode? themeMode,
+    String? userName,
+  }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
+      userName: userName ?? this.userName,
     );
   }
 
@@ -31,5 +39,5 @@ class AppSettings extends Equatable {
   }
 
   @override
-  List<Object?> get props => [themeMode];
+  List<Object?> get props => [themeMode, userName];
 }

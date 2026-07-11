@@ -13,7 +13,12 @@ import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.da
 import 'package:money_tracker_app/features/transactions/utils/transaction_filters.dart';
 
 class StatsScreen extends StatefulWidget {
-  const StatsScreen({super.key});
+  const StatsScreen({
+    super.key,
+    this.onOpenTransactions,
+  });
+
+  final void Function(TransactionFilters filters)? onOpenTransactions;
 
   @override
   State<StatsScreen> createState() => _StatsScreenState();
@@ -21,6 +26,19 @@ class StatsScreen extends StatefulWidget {
 
 class _StatsScreenState extends State<StatsScreen> {
   TransactionDateFilter _period = TransactionDateFilter.thisMonth;
+
+  void _openCategoryTransactions(
+    CategoryBreakdownItem item,
+    TransactionType type,
+  ) {
+    widget.onOpenTransactions?.call(
+      TransactionFilters(
+        type: type,
+        category: item.category,
+        dateFilter: _period,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +110,12 @@ class _StatsScreenState extends State<StatsScreen> {
                 transactions: expenseTransactions,
                 accentColor: Colors.red,
                 emptyMessage: 'Add an expense to see breakdown',
+                onCategoryTap: widget.onOpenTransactions == null
+                    ? null
+                    : (item) => _openCategoryTransactions(
+                          item,
+                          TransactionType.expense,
+                        ),
               ),
               const SizedBox(height: MSizes.spaceBtwSections),
               CategoryBreakdownSection(
@@ -99,6 +123,12 @@ class _StatsScreenState extends State<StatsScreen> {
                 transactions: incomeTransactions,
                 accentColor: Colors.green,
                 emptyMessage: 'Add income to see breakdown',
+                onCategoryTap: widget.onOpenTransactions == null
+                    ? null
+                    : (item) => _openCategoryTransactions(
+                          item,
+                          TransactionType.income,
+                        ),
               ),
               const SizedBox(height: MSizes.spaceBtwSections),
               StatsTrendChart(

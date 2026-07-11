@@ -13,6 +13,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         super(SettingsInitial()) {
     on<LoadSettings>(_onLoadSettings);
     on<UpdateThemeMode>(_onUpdateThemeMode);
+    on<UpdateUserName>(_onUpdateUserName);
 
     add(LoadSettings());
   }
@@ -38,6 +39,18 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) async {
     try {
       final settings = await _repository.updateThemeMode(event.themeMode);
+      emit(SettingsLoaded(settings));
+    } catch (e) {
+      emit(SettingsError(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateUserName(
+    UpdateUserName event,
+    Emitter<SettingsState> emit,
+  ) async {
+    try {
+      final settings = await _repository.updateUserName(event.userName);
       emit(SettingsLoaded(settings));
     } catch (e) {
       emit(SettingsError(e.toString()));

@@ -23,4 +23,8 @@ class CategoryRepository {
   Future<void> delete(CategoryModel category) async {
     await _datasource.delete(category);
   }
+
+  Future<void> clearAll() async {
+    await _datasource.clearAll();
+  }
 }

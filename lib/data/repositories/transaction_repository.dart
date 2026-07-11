@@ -25,6 +25,10 @@ class TransactionRepository {
     await _datasource.delete(transaction);
   }
 
+  Future<void> clearAll() async {
+    await _datasource.clearAll();
+  }
+
   Future<void> syncCategory(CategoryModel category) async {
     await _datasource.syncCategory(category);
   }

@@ -14,12 +14,14 @@ class CategoryBreakdownSection extends StatelessWidget {
     required this.transactions,
     required this.accentColor,
     required this.emptyMessage,
+    this.onCategoryTap,
   });
 
   final String title;
   final List<TransactionModel> transactions;
   final Color accentColor;
   final String emptyMessage;
+  final ValueChanged<CategoryBreakdownItem>? onCategoryTap;
 
   static const _minCardHeight = 280.0;
 
@@ -98,9 +100,13 @@ class CategoryBreakdownSection extends StatelessWidget {
               items: items,
               total: total,
               accentColor: accentColor,
+              onSliceTap: onCategoryTap,
             ),
             const SizedBox(height: MSizes.md),
-            CategoryRankedList(items: items),
+            CategoryRankedList(
+              items: items,
+              onItemTap: onCategoryTap,
+            ),
           ],
         ],
       ),

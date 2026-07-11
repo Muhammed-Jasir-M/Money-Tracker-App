@@ -16,11 +16,11 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({
     super.key,
     this.onViewAllTransactions,
-    this.onOpenSettings,
+    this.onOpenCategories,
   });
 
   final VoidCallback? onViewAllTransactions;
-  final VoidCallback? onOpenSettings;
+  final VoidCallback? onOpenCategories;
 
   static const _recentLimit = 5;
 
@@ -68,7 +68,7 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               children: [
                 /// Home Appbar
-                MHomeAppbar(onOpenSettings: onOpenSettings),
+                MHomeAppbar(onOpenCategories: onOpenCategories),
                 const SizedBox(height: 20),
 
                 /// Balance Card

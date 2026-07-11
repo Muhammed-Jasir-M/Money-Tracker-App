@@ -20,6 +20,8 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
 
   final TransactionRepository _repository;
 
+  TransactionRepository get repository => _repository;
+
   Future<void> _onLoadTransaction(
     LoadTransaction event,
     Emitter<TransactionState> emit,

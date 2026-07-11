@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
+import 'package:money_tracker_app/shared/widgets/confirm_dialog.dart';
 
 class MHelperFunctions {
   static bool isDarkMode(BuildContext context) {
@@ -28,20 +29,12 @@ class MHelperFunctions {
   }
 
   static void showAlert(String title, String message, BuildContext context) {
-    showDialog(
+    MConfirmDialog.show(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
+      title: title,
+      message: message,
+      confirmLabel: 'OK',
+      showCancel: false,
     );
   }
 
@@ -142,7 +135,7 @@ class MHelperFunctions {
   }
 
   static String formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+    return DateFormat('d MMMM yyyy').format(date);
   }
 
   static bool isSameDay(DateTime a, DateTime b) {

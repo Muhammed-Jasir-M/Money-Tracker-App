@@ -16,4 +16,9 @@ class SettingsRepository {
     await _datasource.saveThemeMode(themeMode);
     return _datasource.getSettings();
   }
+
+  Future<AppSettings> updateUserName(String userName) async {
+    await _datasource.saveUserName(userName);
+    return _datasource.getSettings();
+  }
 }
