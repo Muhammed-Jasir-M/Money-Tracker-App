@@ -22,6 +22,8 @@ class TransactionDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = MHelperFunctions.isDarkMode(context);
+    final subtitleColor =
+        isDark ? const Color(0xFF9E9E9E) : MColors.darkerGrey;
     final isIncome = transaction.type == TransactionType.income;
 
     return BlocListener<TransactionBloc, TransactionState>(
@@ -64,8 +66,13 @@ class TransactionDetailScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(MSizes.defaultSpace),
                 decoration: BoxDecoration(
-                  color: isDark ? MColors.dark : MColors.light,
+                  color: isDark ? MColors.cardDark : MColors.cardLight,
                   borderRadius: BorderRadius.circular(16),
+                  border: isDark
+                      ? null
+                      : Border.all(
+                          color: MColors.outline.withValues(alpha: 0.35),
+                        ),
                 ),
                 child: Column(
                   children: [
@@ -101,7 +108,8 @@ class TransactionDetailScreen extends StatelessWidget {
                     Text(
                       transaction.type.name.toUpperCase(),
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: MColors.outline,
+                            color: subtitleColor,
+                            fontWeight: FontWeight.w600,
                           ),
                     ),
                   ],
@@ -111,15 +119,18 @@ class TransactionDetailScreen extends StatelessWidget {
               _DetailRow(
                 label: 'Date',
                 value: MHelperFunctions.formatDate(transaction.dateTime),
+                labelColor: subtitleColor,
               ),
               _DetailRow(
                 label: 'Time',
                 value: MHelperFunctions.formatTime(transaction.dateTime),
+                labelColor: subtitleColor,
               ),
               if (transaction.note.isNotEmpty)
                 _DetailRow(
                   label: 'Note',
                   value: transaction.note,
+                  labelColor: subtitleColor,
                 ),
               const SizedBox(height: MSizes.spaceBtwSections),
               Row(
@@ -192,10 +203,12 @@ class _DetailRow extends StatelessWidget {
   const _DetailRow({
     required this.label,
     required this.value,
+    required this.labelColor,
   });
 
   final String label;
   final String value;
+  final Color labelColor;
 
   @override
   Widget build(BuildContext context) {
@@ -209,7 +222,7 @@ class _DetailRow extends StatelessWidget {
             child: Text(
               label,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: MColors.outline,
+                    color: labelColor,
                     fontWeight: FontWeight.w600,
                   ),
             ),

@@ -35,112 +35,144 @@ class MTransactionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = MHelperFunctions.isDarkMode(context);
-    final baseBg = bgColor ?? (isDark ? MColors.dark : MColors.light);
-    final tileBg = useCategoryTint && bgColor == null
-        ? Color.alphaBlend(iconBgColor.withValues(alpha: 0.12), baseBg)
-        : baseBg;
+    final tileBg = bgColor ?? (isDark ? MColors.cardDark : MColors.cardLight);
+    final subtitleColor =
+        isDark ? const Color(0xFF9E9E9E) : MColors.darkerGrey;
+    final borderColor = isDark
+        ? MColors.outline.withValues(alpha: 0.22)
+        : MColors.outline.withValues(alpha: 0.45);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Material(
         color: Colors.transparent,
+        elevation: 0,
+        shadowColor: Colors.transparent,
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(14),
           child: Container(
             decoration: BoxDecoration(
-              color: tileBg,
               borderRadius: BorderRadius.circular(14),
-              border: useCategoryTint
-                  ? Border(
-                      left: BorderSide(color: iconBgColor, width: 4),
-                    )
-                  : null,
+              boxShadow: isDark
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Container(
-                              width: 50,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                color: iconBgColor,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Icon(icon, color: iconColor),
-                          ],
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: tileBg,
+                  border: Border.all(color: borderColor),
+                ),
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (useCategoryTint)
+                        Container(
+                          width: 4,
+                          color: iconBgColor,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color:
-                                      Theme.of(context).colorScheme.onSurface,
-                                  fontWeight: FontWeight.bold,
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        Container(
+                                          width: 50,
+                                          height: 50,
+                                          decoration: BoxDecoration(
+                                            color: iconBgColor,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        Icon(icon, color: iconColor),
+                                      ],
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          if (note.isNotEmpty) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              note,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: subtitleColor,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              if (note.isNotEmpty) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  note,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: MColors.outline,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                              ],
+                              if (showPriceDate)
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      '${type == TransactionType.income ? '+' : '-'}${amount.toStringAsFixed(2)}',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: type == TransactionType.income
+                                            ? Colors.green
+                                            : Colors.red,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    Text(
+                                      time,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: subtitleColor,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              else if (trailing != null)
+                                trailing!,
                             ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  if (showPriceDate)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '${type == TransactionType.income ? '+' : '-'}${amount.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: type == TransactionType.income
-                                ? Colors.green
-                                : Colors.red,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          time,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: MColors.outline,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    )
-                  else if (trailing != null)
-                    trailing!,
-                ],
+                ),
               ),
             ),
           ),

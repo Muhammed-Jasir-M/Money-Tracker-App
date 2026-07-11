@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:money_tracker_app/core/constants/colors.dart';
-import 'package:money_tracker_app/core/utils/helper_functions.dart';
 
 class MSectionHeading extends StatelessWidget {
   const MSectionHeading({
@@ -19,7 +18,6 @@ class MSectionHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final darkMode = MHelperFunctions.isDarkMode(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -36,8 +34,10 @@ class MSectionHeading extends StatelessWidget {
           TextButton(
             onPressed: onPressed,
             style: TextButton.styleFrom(
-              foregroundColor: darkMode ? MColors.white : MColors.outline,
-              textStyle: Theme.of(context).textTheme.bodyMedium,
+              foregroundColor: MColors.primary,
+              textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
             child: Text(buttontitle),
           ),

@@ -4,6 +4,7 @@ import 'package:money_tracker_app/data/models/category/category_model.dart';
 import 'package:money_tracker_app/data/models/enum/enum.dart';
 import 'package:money_tracker_app/features/categories/view/add_category_screen.dart';
 import 'package:money_tracker_app/features/transactions/view/widgets/category_grid.dart';
+import 'package:money_tracker_app/shared/widgets/button.dart';
 
 Future<Object?> showCategoryPickerSheet({
   required BuildContext context,
@@ -129,23 +130,21 @@ Future<Object?> showCategoryPickerSheet({
                   ),
                 if (showAddButton) ...[
                   const SizedBox(height: MSizes.md),
-                  SizedBox(
+                  MButton(
+                    btnTitle: 'Add category',
                     width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        Navigator.pop(sheetContext);
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AddCategoryScreen(
-                              initialType: filterType,
-                            ),
+                    height: 48,
+                    onTap: () async {
+                      Navigator.pop(sheetContext);
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddCategoryScreen(
+                            initialType: filterType,
                           ),
-                        );
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add category'),
-                    ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ],
