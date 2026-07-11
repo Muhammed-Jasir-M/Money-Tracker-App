@@ -4,6 +4,7 @@ import 'package:money_tracker_app/core/constants/category_icons.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
 import 'package:money_tracker_app/core/utils/helper_functions.dart';
 import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
+import 'package:money_tracker_app/features/budgets/widgets/budget_progress_loader.dart';
 import 'package:money_tracker_app/features/dashboard/widgets/gradient_card.dart';
 import 'package:money_tracker_app/features/dashboard/widgets/home_appbar.dart';
 import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
@@ -18,28 +19,37 @@ class HomeScreen extends StatelessWidget {
     super.key,
     this.onViewAllTransactions,
     this.onOpenCategories,
+    this.onOpenBudgets,
   });
 
   final VoidCallback? onViewAllTransactions;
   final VoidCallback? onOpenCategories;
+  final VoidCallback? onOpenBudgets;
 
   static const _recentLimit = 5;
 
   @override
   Widget build(BuildContext context) {
+    final appBarActions = [
+      if (onOpenBudgets != null)
+        IconButton(
+          onPressed: onOpenBudgets,
+          tooltip: 'Manage budgets',
+          icon: const Icon(Icons.account_balance_wallet_outlined),
+        ),
+      if (onOpenCategories != null)
+        IconButton(
+          onPressed: onOpenCategories,
+          tooltip: 'Manage categories',
+          icon: const Icon(Icons.category_outlined),
+        ),
+    ];
+
     return Scaffold(
       appBar: tabScreenAppBar(
         context,
         title: 'Home',
-        actions: onOpenCategories == null
-            ? null
-            : [
-                IconButton(
-                  onPressed: onOpenCategories,
-                  tooltip: 'Manage categories',
-                  icon: const Icon(Icons.category_outlined),
-                ),
-              ],
+        actions: appBarActions.isEmpty ? null : appBarActions,
       ),
       body: BlocConsumer<TransactionBloc, TransactionState>(
       listener: (context, state) {
@@ -91,6 +101,9 @@ class HomeScreen extends StatelessWidget {
 
                 /// Balance Card
                 MGradientBalanceCard(transactions: transactions),
+                const SizedBox(height: 20),
+
+                const BudgetProgressLoader(compact: true),
                 const SizedBox(height: 20),
 
                 /// Recent Transactions Heading

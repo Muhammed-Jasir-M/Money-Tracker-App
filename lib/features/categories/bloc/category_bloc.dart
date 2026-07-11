@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:money_tracker_app/data/models/category/category_model.dart';
+import 'package:money_tracker_app/data/repositories/budget_repository.dart';
 import 'package:money_tracker_app/data/repositories/category_repository.dart';
 import 'package:money_tracker_app/data/repositories/transaction_repository.dart';
 
@@ -35,8 +36,10 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   CategoryBloc({
     required CategoryRepository repository,
     required TransactionRepository transactionRepository,
+    required BudgetRepository budgetRepository,
   })  : _repository = repository,
         _transactionRepository = transactionRepository,
+        _budgetRepository = budgetRepository,
         super(CategoryInitial()) {
     on<LoadCategories>(_onLoadCategories);
     on<AddCategory>(_onAddCategory);
@@ -48,6 +51,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
 
   final CategoryRepository _repository;
   final TransactionRepository _transactionRepository;
+  final BudgetRepository _budgetRepository;
 
   CategoryRepository get repository => _repository;
 
@@ -115,6 +119,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
 
       emit(CategoryLoading());
       await _repository.delete(event.category);
+      await _budgetRepository.deleteByCategoryId(event.category.cId);
       final categories = await _repository.getAll();
       emit(CategorySuccess(
         categories: categories,

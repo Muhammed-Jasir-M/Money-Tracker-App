@@ -5,6 +5,8 @@ import 'package:money_tracker_app/core/constants/colors.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
 import 'package:money_tracker_app/core/utils/helper_functions.dart';
 import 'package:money_tracker_app/data/models/settings/app_settings.dart';
+import 'package:money_tracker_app/features/budgets/bloc/budget_bloc.dart';
+import 'package:money_tracker_app/features/budgets/view/manage_budgets_screen.dart';
 import 'package:money_tracker_app/features/categories/bloc/category_bloc.dart';
 import 'package:money_tracker_app/features/settings/bloc/settings_bloc.dart';
 import 'package:money_tracker_app/features/settings/view/manage_categories_screen.dart';
@@ -99,11 +101,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Future<void> _clearBudgets() async {
+    final confirmed = await _confirmAction(
+      title: 'Clear all budgets?',
+      message: 'This will remove every monthly spending limit.',
+      confirmLabel: 'Clear',
+      isDestructive: true,
+      icon: Icons.account_balance_wallet_outlined,
+    );
+    if (!confirmed || !mounted) return;
+
+    final budgetBloc = context.read<BudgetBloc>();
+    await budgetBloc.repository.clearAll();
+    budgetBloc.add(LoadBudgets());
+
+    if (!mounted) return;
+    MHelperFunctions.showSnackBar(
+      context: context,
+      title: 'Cleared',
+      message: 'All budgets were removed',
+      bgColor: Colors.green,
+      icon: Icons.check_circle,
+    );
+  }
+
   Future<void> _resetAllData() async {
     final confirmed = await _confirmAction(
       title: 'Reset all data?',
       message:
-          'This will delete all transactions and categories. This cannot be undone.',
+          'This will delete all transactions, categories, and budgets. This cannot be undone.',
       confirmLabel: 'Reset',
       isDestructive: true,
       icon: Icons.delete_forever_outlined,
@@ -112,16 +138,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     final transactionBloc = context.read<TransactionBloc>();
     final categoryBloc = context.read<CategoryBloc>();
+    final budgetBloc = context.read<BudgetBloc>();
     await transactionBloc.repository.clearAll();
     await categoryBloc.repository.clearAll();
+    await budgetBloc.repository.clearAll();
     transactionBloc.add(LoadTransaction());
     categoryBloc.add(LoadCategories());
+    budgetBloc.add(LoadBudgets());
 
     if (!mounted) return;
     MHelperFunctions.showSnackBar(
       context: context,
       title: 'Reset complete',
-      message: 'All transactions and categories were removed',
+      message: 'All transactions, categories, and budgets were removed',
       bgColor: Colors.green,
       icon: Icons.check_circle,
     );
@@ -353,7 +382,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: MSizes.md),
             _SettingsSectionCard(
               isDark: isDark,
-              title: 'Data',
+              title: 'Manage',
               child: Column(
                 children: [
                   _SettingsTile(
@@ -369,6 +398,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: MSizes.sm),
                   _SettingsTile(
+                    icon: Icons.account_balance_wallet_outlined,
+                    title: 'Manage budgets',
+                    subtitle: 'Set monthly limits for expenses and categories',
+                    onTap: () {
+                      MHelperFunctions.navigateToScreen(
+                        context,
+                        const ManageBudgetsScreen(),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: MSizes.md),
+            _SettingsSectionCard(
+              isDark: isDark,
+              title: 'Clear & reset',
+              child: Column(
+                children: [
+                  _SettingsTile(
                     icon: Icons.receipt_long_outlined,
                     title: 'Clear transactions',
                     subtitle: 'Remove all transactions only',
@@ -383,9 +432,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: MSizes.sm),
                   _SettingsTile(
+                    icon: Icons.account_balance_wallet_outlined,
+                    title: 'Clear budgets',
+                    subtitle: 'Remove all monthly spending limits',
+                    onTap: _clearBudgets,
+                  ),
+                  const SizedBox(height: MSizes.sm),
+                  _SettingsTile(
                     icon: Icons.delete_forever_outlined,
                     title: 'Reset all data',
-                    subtitle: 'Delete transactions and categories',
+                    subtitle: 'Delete transactions, categories, and budgets',
                     onTap: _resetAllData,
                     destructive: true,
                   ),

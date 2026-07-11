@@ -4,6 +4,7 @@ import 'package:money_tracker_app/core/constants/sizes.dart';
 import 'package:money_tracker_app/core/utils/helper_functions.dart';
 import 'package:money_tracker_app/data/models/enum/enum.dart';
 import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
+import 'package:money_tracker_app/features/budgets/widgets/budget_progress_loader.dart';
 import 'package:money_tracker_app/features/stats/utils/stats_helpers.dart';
 import 'package:money_tracker_app/features/stats/widgets/category_breakdown_section.dart';
 import 'package:money_tracker_app/features/stats/widgets/stats_summary_row.dart';
@@ -118,6 +119,12 @@ class _StatsScreenState extends State<StatsScreen> {
                 totalIncome: totalIncome,
                 totalExpense: totalExpense,
                 net: totalIncome - totalExpense,
+              ),
+              const SizedBox(height: MSizes.spaceBtwSections),
+              BudgetProgressLoader(
+                compact: true,
+                periodFilters: _periodFilters,
+                monthlyViewOnly: true,
               ),
               const SizedBox(height: MSizes.spaceBtwSections),
               CategoryBreakdownSection(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:money_tracker_app/core/utils/helper_functions.dart';
 import 'package:money_tracker_app/features/dashboard/view/home_screen.dart';
+import 'package:money_tracker_app/features/budgets/view/manage_budgets_screen.dart';
 import 'package:money_tracker_app/features/settings/view/manage_categories_screen.dart';
 import 'package:money_tracker_app/features/settings/view/settings_screen.dart';
 import 'package:money_tracker_app/features/shell/models/transactions_navigation_request.dart';
@@ -44,6 +45,12 @@ class _MainScreenState extends State<MainScreen> {
     final screens = [
       HomeScreen(
         onViewAllTransactions: () => _switchTab(1),
+        onOpenBudgets: () {
+          MHelperFunctions.navigateToScreen(
+            context,
+            const ManageBudgetsScreen(),
+          );
+        },
         onOpenCategories: () {
           MHelperFunctions.navigateToScreen(
             context,

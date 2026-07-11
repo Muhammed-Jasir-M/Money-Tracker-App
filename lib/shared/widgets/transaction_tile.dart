@@ -14,6 +14,7 @@ class MTransactionTile extends StatelessWidget {
     this.amount = 0.0,
     this.time = '',
     this.note = '',
+    this.noteMaxLines = 1,
     this.showPriceDate = true,
     this.bgColor,
     this.useCategoryTint = true,
@@ -25,6 +26,7 @@ class MTransactionTile extends StatelessWidget {
   final Color iconBgColor, iconColor;
   final IconData icon;
   final String title, time, note;
+  final int? noteMaxLines;
   final double amount;
   final bool showPriceDate;
   final Color? bgColor;
@@ -86,10 +88,12 @@ class MTransactionTile extends StatelessWidget {
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Expanded(
                                 child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Stack(
                                       alignment: Alignment.center,
@@ -127,12 +131,15 @@ class MTransactionTile extends StatelessWidget {
                                             const SizedBox(height: 2),
                                             Text(
                                               note,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: noteMaxLines,
+                                              overflow: noteMaxLines == null
+                                                  ? TextOverflow.visible
+                                                  : TextOverflow.ellipsis,
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 color: subtitleColor,
                                                 fontWeight: FontWeight.w500,
+                                                height: 1.35,
                                               ),
                                             ),
                                           ],
