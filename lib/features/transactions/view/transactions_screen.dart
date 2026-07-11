@@ -190,6 +190,18 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     );
   }
 
+  Future<void> _confirmDeleteTransaction(TransactionModel transaction) async {
+    final confirmed = await MConfirmDialog.show(
+      context: context,
+      title: 'Delete transaction?',
+      message: 'This action cannot be undone.',
+      confirmLabel: 'Delete',
+      isDestructive: true,
+    );
+    if (!confirmed || !mounted) return;
+    context.read<TransactionBloc>().add(DeleteTransaction(transaction));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -321,25 +333,47 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                       ),
                                 ),
                               ),
-                            MTransactionTile(
-                              icon: categoryIcons[
-                                  transaction.category.iconIndex],
-                              title: transaction.category.title,
-                              note: transaction.note,
-                              iconBgColor: Color(transaction.category.color),
-                              amount: transaction.amount,
-                              time: MHelperFunctions.formatTime(
-                                transaction.dateTime,
+                            Dismissible(
+                              key: ValueKey(transaction.tId),
+                              direction: DismissDirection.endToStart,
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                margin: const EdgeInsets.only(bottom: MSizes.sm),
+                                padding: const EdgeInsets.only(right: MSizes.lg),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withValues(alpha: 0.9),
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: const Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.white,
+                                ),
                               ),
-                              type: transaction.type,
-                              onTap: () {
-                                MHelperFunctions.navigateToScreen(
-                                  context,
-                                  TransactionDetailScreen(
-                                    transaction: transaction,
-                                  ),
-                                );
+                              confirmDismiss: (_) async {
+                                await _confirmDeleteTransaction(transaction);
+                                return false;
                               },
+                              child: MTransactionTile(
+                                icon: categoryIcons[
+                                    transaction.category.iconIndex],
+                                title: transaction.category.title,
+                                note: transaction.note,
+                                iconBgColor:
+                                    Color(transaction.category.color),
+                                amount: transaction.amount,
+                                time: MHelperFunctions.formatTime(
+                                  transaction.dateTime,
+                                ),
+                                type: transaction.type,
+                                onTap: () {
+                                  MHelperFunctions.navigateToScreen(
+                                    context,
+                                    TransactionDetailScreen(
+                                      transaction: transaction,
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ],
                         );

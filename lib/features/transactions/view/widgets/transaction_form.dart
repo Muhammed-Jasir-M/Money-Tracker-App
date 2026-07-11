@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:money_tracker_app/core/constants/category_icons.dart';
 import 'package:money_tracker_app/core/constants/colors.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
+import 'package:money_tracker_app/core/currency/currency_scope.dart';
 import 'package:money_tracker_app/core/utils/helper_functions.dart';
 import 'package:money_tracker_app/data/models/category/category_model.dart';
 import 'package:money_tracker_app/data/models/enum/enum.dart';
@@ -42,6 +43,7 @@ class _MTransactionFormState extends State<MTransactionForm> {
   TransactionType _transactionType = TransactionType.income;
   CategoryModel _selectedCategory = CategoryModel.empty();
   DateTime _selectedDateTime = DateTime.now();
+  final _categoryFieldKey = GlobalKey<FormFieldState<void>>();
 
   final _receiptStorage = ReceiptStorage();
   String? _pendingReceiptPath;
@@ -99,6 +101,7 @@ class _MTransactionFormState extends State<MTransactionForm> {
         _selectedCategory = result;
         _categoryController.text = result.title;
       });
+      _categoryFieldKey.currentState?.validate();
     } else if (result == null) {
       context.read<CategoryBloc>().add(LoadCategories());
     }
@@ -157,6 +160,7 @@ class _MTransactionFormState extends State<MTransactionForm> {
   Widget build(BuildContext context) {
     final isDark = MHelperFunctions.isDarkMode(context);
     final isEditing = widget.isEditing;
+    final currencySymbol = CurrencyScope.of(context);
 
     return BlocListener<TransactionBloc, TransactionState>(
       listener: (context, state) {
@@ -226,15 +230,37 @@ class _MTransactionFormState extends State<MTransactionForm> {
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 textAlign: TextAlign.center,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                validator: (value) {
+                  final amount = double.tryParse(value?.trim() ?? '');
+                  if (amount == null || amount <= 0) {
+                    return 'Enter a valid amount greater than zero';
+                  }
+                  return null;
+                },
                 style: Theme.of(context).textTheme.displaySmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                 decoration: InputDecoration(
                   hintText: '0.00',
-                  prefixIcon: const Icon(
-                    FontAwesomeIcons.indianRupeeSign,
-                    size: 20,
-                    color: Colors.grey,
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.only(left: 20, right: 4),
+                    child: Align(
+                      alignment: Alignment.center,
+                      widthFactor: 1,
+                      child: Text(
+                        currencySymbol,
+                        style:
+                            Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey,
+                                ),
+                      ),
+                    ),
+                  ),
+                  prefixIconConstraints: const BoxConstraints(
+                    minWidth: 0,
+                    minHeight: 0,
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15),
@@ -246,16 +272,47 @@ class _MTransactionFormState extends State<MTransactionForm> {
                 ),
               ),
               const SizedBox(height: MSizes.spaceBtwItems),
-              MTextFormField(
-                controller: _categoryController,
-                label: 'Category',
-                hintText: 'Tap to select',
-                readOnly: true,
-                prefixIcon: _selectedCategory != CategoryModel.empty()
-                    ? categoryIcons[_selectedCategory.iconIndex]
-                    : FontAwesomeIcons.list,
-                suffixIcon: Icons.chevron_right,
-                onTap: _openCategoryPicker,
+              FormField<void>(
+                key: _categoryFieldKey,
+                validator: (_) {
+                  if (_selectedCategory == CategoryModel.empty()) {
+                    return 'Please select a category';
+                  }
+                  return null;
+                },
+                builder: (field) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      MTextFormField(
+                        controller: _categoryController,
+                        label: 'Category',
+                        hintText: 'Tap to select',
+                        readOnly: true,
+                        prefixIcon: _selectedCategory != CategoryModel.empty()
+                            ? categoryIcons[_selectedCategory.iconIndex]
+                            : FontAwesomeIcons.list,
+                        suffixIcon: Icons.chevron_right,
+                        onTap: _openCategoryPicker,
+                      ),
+                      if (field.hasError) ...[
+                        const SizedBox(height: MSizes.xs),
+                        Padding(
+                          padding: const EdgeInsets.only(left: MSizes.sm),
+                          child: Text(
+                            field.errorText!,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: MSizes.spaceBtwItems),
               MTextFormField(
@@ -349,29 +406,11 @@ class _MTransactionFormState extends State<MTransactionForm> {
   }
 
   void _validateAndSubmitTask() async {
-    if (_selectedCategory == CategoryModel.empty()) {
-      MHelperFunctions.showSnackBar(
-        message: 'Please select a category',
-        context: context,
-        title: 'Error',
-        bgColor: Colors.red,
-        icon: Icons.error,
-      );
-      return;
-    }
+    final isValid = _formKey.currentState!.validate() &&
+        (_categoryFieldKey.currentState?.validate() ?? true);
+    if (!isValid) return;
 
-    final amount = double.tryParse(_amountController.text);
-    if (amount == null || amount <= 0) {
-      MHelperFunctions.showSnackBar(
-        message: 'Please enter a valid amount',
-        context: context,
-        title: 'Error',
-        bgColor: Colors.red,
-        icon: Icons.error,
-      );
-      return;
-    }
-
+    final amount = double.parse(_amountController.text.trim());
     final bloc = context.read<TransactionBloc>();
 
     if (widget.isEditing && widget.transaction != null) {

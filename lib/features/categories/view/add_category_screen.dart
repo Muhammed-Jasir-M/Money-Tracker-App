@@ -29,11 +29,14 @@ class AddCategoryScreen extends StatefulWidget {
 }
 
 class _AddCategoryScreenState extends State<AddCategoryScreen> {
+  final _formKey = GlobalKey<FormState>();
   int iconSelected = 0;
   Color selectedColor = categoryColorSwatches.first;
   TransactionType selectedType = TransactionType.expense;
 
   bool isCategoryLoading = false;
+  bool _hasLinkedTransactions = false;
+  bool _linkedTransactionsChecked = false;
 
   final titleController = TextEditingController();
 
@@ -68,6 +71,18 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
     }
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.isEditing && !_linkedTransactionsChecked) {
+      _linkedTransactionsChecked = true;
+      _hasLinkedTransactions = context
+          .read<TransactionBloc>()
+          .repository
+          .hasTransactionsForCategory(widget.category!.cId);
+    }
+  }
+
   Future<void> _openCustomColorPicker() async {
     await showDialog(
       context: context,
@@ -94,16 +109,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   }
 
   void _submit() {
-    if (titleController.text.trim().isEmpty) {
-      MHelperFunctions.showSnackBar(
-        message: 'Please enter a category name',
-        context: context,
-        title: 'Error',
-        bgColor: Colors.red,
-        icon: Icons.error,
-      );
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() => isCategoryLoading = true);
 
@@ -111,8 +117,10 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
       final category = widget.category!
         ..title = titleController.text.trim()
         ..iconIndex = iconSelected
-        ..color = selectedColor.toARGB32()
-        ..type = selectedType;
+        ..color = selectedColor.toARGB32();
+      if (!_hasLinkedTransactions) {
+        category.type = selectedType;
+      }
 
       context.read<CategoryBloc>().add(UpdateCategory(category));
       return;
@@ -148,9 +156,11 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(MSizes.defaultSpace),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Text('Preview', style: _sectionLabelStyle(context)),
             const SizedBox(height: MSizes.sm),
             MTransactionTile(
@@ -166,9 +176,29 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
               label: 'Name',
               hintText: 'e.g. Food, Travel',
               prefixIcon: Icons.category_rounded,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Please enter a category name';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: MSizes.spaceBtwItems),
             Text('Type', style: _sectionLabelStyle(context)),
+            if (_hasLinkedTransactions) ...[
+              const SizedBox(height: MSizes.xs),
+              Text(
+                'Type cannot be changed while transactions use this category.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.color
+                          ?.withValues(alpha: 0.7),
+                    ),
+              ),
+            ],
             const SizedBox(height: MSizes.sm),
             Row(
               children: [
@@ -178,9 +208,11 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     isSelected: selectedType == TransactionType.income,
                     color: Colors.green,
                     baseColor: isDark ? MColors.dark : MColors.light,
-                    onTap: () => setState(
-                      () => selectedType = TransactionType.income,
-                    ),
+                    onTap: _hasLinkedTransactions
+                        ? null
+                        : () => setState(
+                              () => selectedType = TransactionType.income,
+                            ),
                   ),
                 ),
                 const SizedBox(width: MSizes.sm),
@@ -190,9 +222,11 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     isSelected: selectedType == TransactionType.expense,
                     color: Colors.red,
                     baseColor: isDark ? MColors.dark : MColors.light,
-                    onTap: () => setState(
-                      () => selectedType = TransactionType.expense,
-                    ),
+                    onTap: _hasLinkedTransactions
+                        ? null
+                        : () => setState(
+                              () => selectedType = TransactionType.expense,
+                            ),
                   ),
                 ),
               ],
@@ -332,6 +366,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );
@@ -351,7 +386,7 @@ class _TypeOption extends StatelessWidget {
   final bool isSelected;
   final Color color;
   final Color baseColor;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -360,7 +395,9 @@ class _TypeOption extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        child: Container(
+        child: Opacity(
+          opacity: onTap == null ? 0.55 : 1,
+          child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
             color: isSelected ? color.withValues(alpha: 0.15) : baseColor,
@@ -378,6 +415,7 @@ class _TypeOption extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
             ),
+          ),
           ),
         ),
       ),

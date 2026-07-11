@@ -26,6 +26,10 @@ class MTextFormField extends StatelessWidget {
     this.contentPadding,
     this.maxLines = 1,
     this.minLines,
+    this.validator,
+    this.autovalidateMode,
+    this.prefixText,
+    this.prefixWidget,
   });
 
   final TextEditingController? controller;
@@ -46,6 +50,10 @@ class MTextFormField extends StatelessWidget {
   final EdgeInsetsGeometry? contentPadding;
   final int? maxLines;
   final int? minLines;
+  final String? Function(String?)? validator;
+  final AutovalidateMode? autovalidateMode;
+  final String? prefixText;
+  final Widget? prefixWidget;
 
   @override
   Widget build(BuildContext context) {
@@ -64,11 +72,17 @@ class MTextFormField extends StatelessWidget {
       onChanged: onChanged,
       maxLines: maxLines,
       minLines: minLines,
+      validator: validator,
+      autovalidateMode: autovalidateMode,
       decoration: InputDecoration(
         hintText: hintText,
         isDense: isDense,
         contentPadding: contentPadding,
-        prefixIcon: Icon(prefixIcon, size: 16, color: Colors.grey),
+        prefixText: prefixText,
+        prefix: prefixWidget,
+        prefixIcon: prefixWidget == null && prefixText == null
+            ? Icon(prefixIcon, size: 16, color: Colors.grey)
+            : null,
         suffixIcon: suffixWidget ??
             (suffixIcon != null
                 ? IconButton(

@@ -35,4 +35,10 @@ class SettingsRepository {
     await _datasource.saveAll(settings);
     return _datasource.getSettings();
   }
+
+  Future<AppSettings> resetToDefaults() async {
+    const defaults = AppSettings();
+    await _datasource.saveAll(defaults);
+    return defaults;
+  }
 }

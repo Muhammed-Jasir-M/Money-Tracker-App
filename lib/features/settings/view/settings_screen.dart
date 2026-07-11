@@ -16,6 +16,7 @@ import 'package:money_tracker_app/features/settings/view/manage_categories_scree
 import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
 import 'package:money_tracker_app/shared/widgets/appbar.dart';
 import 'package:money_tracker_app/shared/widgets/confirm_dialog.dart';
+import 'package:money_tracker_app/shared/widgets/empty_state.dart';
 import 'package:money_tracker_app/shared/widgets/text_form_field.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -242,7 +243,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final confirmed = await _confirmAction(
       title: 'Reset all data?',
       message:
-          'This will delete all transactions, categories, budgets, and photos. This cannot be undone.',
+          'This will delete all transactions, categories, budgets, photos, and reset your profile, theme, and currency. This cannot be undone.',
       confirmLabel: 'Reset',
       isDestructive: true,
       icon: Icons.delete_forever_outlined,
@@ -252,19 +253,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final transactionBloc = context.read<TransactionBloc>();
     final categoryBloc = context.read<CategoryBloc>();
     final budgetBloc = context.read<BudgetBloc>();
+    final settingsBloc = context.read<SettingsBloc>();
     await ReceiptStorage().clearAll();
     await transactionBloc.repository.clearAll();
     await categoryBloc.repository.clearAll();
     await budgetBloc.repository.clearAll();
+    await settingsBloc.repository.resetToDefaults();
     transactionBloc.add(LoadTransaction());
     categoryBloc.add(LoadCategories());
     budgetBloc.add(LoadBudgets());
+    settingsBloc.add(LoadSettings());
+    setState(() {
+      _isEditingName = false;
+      _loadedName = null;
+    });
 
     if (!mounted) return;
     MHelperFunctions.showSnackBar(
       context: context,
       title: 'Reset complete',
-      message: 'All transactions, categories, and budgets were removed',
+      message: 'All app data and settings were restored to defaults',
       bgColor: Colors.green,
       icon: Icons.check_circle,
     );
@@ -392,7 +400,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         }
 
         if (state is SettingsError) {
-          return Center(child: Text('Error: ${state.message}'));
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(MSizes.defaultSpace),
+              child: MEmptyState(
+                icon: Icons.error_outline,
+                title: 'Could not load settings',
+                subtitle: state.message,
+                actionLabel: 'Try again',
+                onAction: () {
+                  context.read<SettingsBloc>().add(LoadSettings());
+                },
+              ),
+            ),
+          );
         }
 
         final settings = (state as SettingsLoaded).settings;
@@ -579,7 +600,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _SettingsTile(
                     icon: Icons.delete_forever_outlined,
                     title: 'Reset all data',
-                    subtitle: 'Delete transactions, categories, and budgets',
+                    subtitle:
+                        'Delete everything and restore default settings',
                     onTap: _resetAllData,
                     destructive: true,
                   ),

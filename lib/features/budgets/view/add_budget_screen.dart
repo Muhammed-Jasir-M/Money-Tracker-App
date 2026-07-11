@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
-import 'package:money_tracker_app/core/utils/helper_functions.dart';
 import 'package:money_tracker_app/data/models/budget/budget_model.dart';
 import 'package:money_tracker_app/data/models/category/category_model.dart';
 import 'package:money_tracker_app/data/models/enum/enum.dart';
@@ -26,7 +25,9 @@ class AddBudgetScreen extends StatefulWidget {
 }
 
 class _AddBudgetScreenState extends State<AddBudgetScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
+  final _categoryFieldKey = GlobalKey<FormFieldState<void>>();
   _BudgetTarget _target = _BudgetTarget.total;
   CategoryModel? _selectedCategory;
   bool _isLoading = false;
@@ -103,43 +104,29 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
 
     if (!mounted || result is! CategoryModel) return;
     setState(() => _selectedCategory = result);
+    _categoryFieldKey.currentState?.validate();
   }
 
   double? _parseAmount() {
-    final value = double.tryParse(_amountController.text.trim());
-    if (value == null || value <= 0) return null;
-    return value;
+    return double.tryParse(_amountController.text.trim());
   }
 
   Future<void> _save() async {
-    final amount = _parseAmount();
-    if (amount == null) {
-      MHelperFunctions.showSnackBar(
-        context: context,
-        title: 'Invalid amount',
-        message: 'Enter a budget limit greater than zero',
-        bgColor: Colors.red,
-        icon: Icons.error,
-      );
-      return;
-    }
+    final isValid = _formKey.currentState!.validate() &&
+        (_target != _BudgetTarget.category ||
+            (_categoryFieldKey.currentState?.validate() ?? false));
+    if (!isValid) return;
 
-    if (_target == _BudgetTarget.category && _selectedCategory == null) {
-      MHelperFunctions.showSnackBar(
-        context: context,
-        title: 'Category required',
-        message: 'Choose a category for this budget',
-        bgColor: Colors.red,
-        icon: Icons.error,
-      );
-      return;
-    }
+    final amount = _parseAmount();
+    if (amount == null) return;
 
     setState(() => _isLoading = true);
 
     if (widget.isEditing) {
       final budget = widget.budget!
-        ..amountLimit = amount;
+        ..amountLimit = amount
+        ..categoryId =
+            _target == _BudgetTarget.total ? null : _selectedCategory!.cId;
       context.read<BudgetBloc>().add(UpdateBudget(budget));
     } else {
       final budget = BudgetModel(
@@ -168,8 +155,6 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final canPickCategory = !widget.isEditing;
-
     return Scaffold(
       appBar: MAppBar(
         showBackArrow: true,
@@ -178,56 +163,94 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
           style: Theme.of(context).textTheme.titleLarge,
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(MSizes.defaultSpace),
-        children: [
-          Text('Budget for', style: _sectionLabelStyle(context)),
-          const SizedBox(height: MSizes.sm),
-          Row(
-            children: [
-              Expanded(
-                child: _TargetChip(
-                  label: 'Total expenses',
-                  selected: _target == _BudgetTarget.total,
-                  onTap: canPickCategory
-                      ? () => setState(() {
-                            _target = _BudgetTarget.total;
-                            _selectedCategory = null;
-                          })
-                      : null,
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(MSizes.defaultSpace),
+          children: [
+            Text('Budget for', style: _sectionLabelStyle(context)),
+            const SizedBox(height: MSizes.sm),
+            Row(
+              children: [
+                Expanded(
+                  child: _TargetChip(
+                    label: 'Total expenses',
+                    selected: _target == _BudgetTarget.total,
+                    onTap: () => setState(() {
+                      _target = _BudgetTarget.total;
+                      _selectedCategory = null;
+                      _categoryFieldKey.currentState?.validate();
+                    }),
+                  ),
                 ),
-              ),
-              const SizedBox(width: MSizes.sm),
-              Expanded(
-                child: _TargetChip(
-                  label: 'Category',
-                  selected: _target == _BudgetTarget.category,
-                  onTap: canPickCategory
-                      ? () => setState(() => _target = _BudgetTarget.category)
-                      : null,
+                const SizedBox(width: MSizes.sm),
+                Expanded(
+                  child: _TargetChip(
+                    label: 'Category',
+                    selected: _target == _BudgetTarget.category,
+                    onTap: () => setState(() => _target = _BudgetTarget.category),
+                  ),
                 ),
+              ],
+            ),
+            if (_target == _BudgetTarget.category) ...[
+              const SizedBox(height: MSizes.md),
+              FormField<void>(
+                key: _categoryFieldKey,
+                validator: (_) {
+                  if (_selectedCategory == null) {
+                    return 'Choose a category for this budget';
+                  }
+                  return null;
+                },
+                builder: (field) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      MTextFormField(
+                        label: 'Category',
+                        hintText: _selectedCategory?.title ?? 'Select category',
+                        prefixIcon: Icons.category_outlined,
+                        readOnly: true,
+                        suffixIcon: Icons.chevron_right,
+                        onTap: _openCategoryPicker,
+                      ),
+                      if (field.hasError) ...[
+                        const SizedBox(height: MSizes.xs),
+                        Padding(
+                          padding: const EdgeInsets.only(left: MSizes.sm),
+                          child: Text(
+                            field.errorText!,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  );
+                },
               ),
             ],
-          ),
-          if (_target == _BudgetTarget.category) ...[
             const SizedBox(height: MSizes.md),
             MTextFormField(
-              label: 'Category',
-              hintText: _selectedCategory?.title ?? 'Select category',
-              prefixIcon: Icons.category_outlined,
-              readOnly: true,
-              suffixIcon: Icons.chevron_right,
-              onTap: _openCategoryPicker,
+              controller: _amountController,
+              label: 'Monthly limit',
+              hintText: 'e.g. 8000',
+              prefixIcon: Icons.payments_outlined,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              validator: (value) {
+                final amount = double.tryParse(value?.trim() ?? '');
+                if (amount == null || amount <= 0) {
+                  return 'Enter a budget limit greater than zero';
+                }
+                return null;
+              },
             ),
-          ],
-          const SizedBox(height: MSizes.md),
-          MTextFormField(
-            controller: _amountController,
-            label: 'Monthly limit',
-            hintText: 'e.g. 8000',
-            prefixIcon: Icons.payments_outlined,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          ),
           const SizedBox(height: MSizes.sm),
           Text(
             'Tracks spending for the current calendar month.',
@@ -247,6 +270,7 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
             onTap: _isLoading ? null : _save,
           ),
         ],
+        ),
       ),
     );
   }

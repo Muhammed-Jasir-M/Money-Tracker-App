@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:money_tracker_app/core/constants/colors.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
 import 'package:money_tracker_app/core/utils/money_format.dart';
 import 'package:money_tracker_app/shared/widgets/confirm_dialog.dart';
@@ -52,54 +53,120 @@ class MHelperFunctions {
     required IconData icon,
     required BuildContext context,
     required Color bgColor,
-    Duration duration = const Duration(seconds: 1),
+    Duration duration = const Duration(seconds: 3),
     SnackBarAction? action,
   }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Container(
-          padding: const EdgeInsets.all(MSizes.sm),
-          width: double.infinity,
-          height: 80,
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(MSizes.sm),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, color: Colors.white, size: 40),
-              SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.titleLarge!.copyWith(color: Colors.white),
-                    ),
-                    const SizedBox(height: MSizes.xs),
-                    Text(
-                      message,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium!.copyWith(color: Colors.white70),
-                    ),
-                  ],
-                ),
+    final isDark = isDarkMode(context);
+    final surfaceColor = isDark ? MColors.cardDark : MColors.white;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: MSizes.md,
+              vertical: MSizes.sm + 2,
+            ),
+            decoration: BoxDecoration(
+              color: surfaceColor,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: bgColor.withValues(alpha: 0.35),
               ),
-            ],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: bgColor.withValues(alpha: 0.14),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: bgColor, size: 22),
+                ),
+                const SizedBox(width: MSizes.sm + 2),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: onSurface,
+                            ),
+                      ),
+                      if (message.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          message,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: onSurface.withValues(alpha: 0.72),
+                                    height: 1.35,
+                                  ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
+          backgroundColor: Colors.transparent,
+          duration: duration,
+          action: action,
+          behavior: SnackBarBehavior.floating,
+          elevation: 0,
+          margin: const EdgeInsets.fromLTRB(
+            MSizes.md,
+            0,
+            MSizes.md,
+            MSizes.md,
+          ),
+          padding: EdgeInsets.zero,
         ),
-        backgroundColor: Colors.transparent,
-        duration: duration,
-        action: action,
-        behavior: SnackBarBehavior.floating,
-        elevation: 0,
-      ),
+      );
+  }
+
+  static void showSuccessSnackBar(
+    BuildContext context, {
+    required String title,
+    String message = '',
+  }) {
+    showSnackBar(
+      context: context,
+      title: title,
+      message: message,
+      icon: Icons.check_circle_rounded,
+      bgColor: const Color(0xFF2E7D32),
+    );
+  }
+
+  static void showErrorSnackBar(
+    BuildContext context, {
+    required String title,
+    String message = '',
+  }) {
+    showSnackBar(
+      context: context,
+      title: title,
+      message: message,
+      icon: Icons.error_outline_rounded,
+      bgColor: const Color(0xFFC62828),
     );
   }
 
