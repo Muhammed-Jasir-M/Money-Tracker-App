@@ -60,7 +60,12 @@ class _StatsScreenState extends State<StatsScreen> {
         final totalExpense = StatsHelpers.sumAmount(expenseTransactions);
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(MSizes.defaultSpace),
+          padding: const EdgeInsets.fromLTRB(
+            MSizes.defaultSpace,
+            MSizes.defaultSpace,
+            MSizes.defaultSpace,
+            88,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -96,7 +101,10 @@ class _StatsScreenState extends State<StatsScreen> {
                 emptyMessage: 'Add income to see breakdown',
               ),
               const SizedBox(height: MSizes.spaceBtwSections),
-              StatsTrendChart(transactions: periodTransactions),
+              StatsTrendChart(
+                transactions: periodTransactions,
+                period: _period,
+              ),
               const SizedBox(height: MSizes.defaultSpace),
             ],
           ),

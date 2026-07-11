@@ -21,7 +21,7 @@ class CategoryBreakdownSection extends StatelessWidget {
   final Color accentColor;
   final String emptyMessage;
 
-  static const _minCardHeight = 300.0;
+  static const _minCardHeight = 280.0;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +31,6 @@ class CategoryBreakdownSection extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(minHeight: _minCardHeight),
       padding: const EdgeInsets.all(MSizes.md),
       decoration: BoxDecoration(
         color: isDark ? MColors.dark : MColors.light,
@@ -41,22 +40,27 @@ class CategoryBreakdownSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 width: 4,
                 height: 20,
+                margin: const EdgeInsets.only(top: 2),
                 decoration: BoxDecoration(
                   color: accentColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               const SizedBox(width: MSizes.sm),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: accentColor,
-                    ),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 2,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: accentColor,
+                      ),
+                ),
               ),
             ],
           ),

@@ -42,6 +42,8 @@ class CategoryRankedList extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(width: MSizes.sm),
               SizedBox(

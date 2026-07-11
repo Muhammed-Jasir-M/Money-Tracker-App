@@ -87,13 +87,15 @@ class _SummaryCard extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: MSizes.xs),
-          Text(
-            '\u{20B9}${amount.toStringAsFixed(0)}',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              '\u{20B9}${amount.toStringAsFixed(0)}',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+              maxLines: 1,
+            ),
           ),
         ],
       ),

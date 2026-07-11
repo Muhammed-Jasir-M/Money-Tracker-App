@@ -5,21 +5,39 @@ import 'package:money_tracker_app/core/constants/sizes.dart';
 import 'package:money_tracker_app/core/utils/helper_functions.dart';
 import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
 import 'package:money_tracker_app/features/stats/utils/stats_helpers.dart';
+import 'package:money_tracker_app/features/transactions/utils/transaction_filters.dart';
 
 class StatsTrendChart extends StatelessWidget {
   const StatsTrendChart({
     super.key,
     required this.transactions,
+    required this.period,
   });
 
   final List<TransactionModel> transactions;
+  final TransactionDateFilter period;
 
   static const _chartHeight = 280.0;
+
+  String get _title => switch (period) {
+        TransactionDateFilter.all => 'Monthly trend',
+        TransactionDateFilter.thisMonth => 'Daily trend this month',
+        TransactionDateFilter.thisWeek => 'Daily trend this week',
+      };
+
+  String get _emptyMessage => switch (period) {
+        TransactionDateFilter.all =>
+          'Add transactions across multiple months to see trend',
+        TransactionDateFilter.thisMonth =>
+          'Add transactions this month to see daily trend',
+        TransactionDateFilter.thisWeek =>
+          'Add transactions this week to see daily trend',
+      };
 
   @override
   Widget build(BuildContext context) {
     final isDark = MHelperFunctions.isDarkMode(context);
-    final points = StatsHelpers.groupByMonth(transactions);
+    final points = StatsHelpers.groupTrend(transactions, period);
 
     return Container(
       width: double.infinity,
@@ -33,7 +51,7 @@ class StatsTrendChart extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Monthly trend',
+            _title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -48,10 +66,10 @@ class StatsTrendChart extends StatelessWidget {
           ),
           const SizedBox(height: MSizes.sm),
           Expanded(
-            child: points.length < 2
+            child: points.isEmpty
                 ? Center(
                     child: Text(
-                      'Add more transactions to see monthly trend',
+                      _emptyMessage,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Theme.of(context)
                                 .textTheme
@@ -113,6 +131,11 @@ class StatsTrendChart extends StatelessWidget {
                               if (index < 0 || index >= points.length) {
                                 return const SizedBox.shrink();
                               }
+                              if (points.length > 7 &&
+                                  index % ((points.length / 4).ceil()) != 0 &&
+                                  index != points.length - 1) {
+                                return const SizedBox.shrink();
+                              }
                               return Padding(
                                 padding: const EdgeInsets.only(top: 8),
                                 child: Text(
@@ -130,7 +153,7 @@ class StatsTrendChart extends StatelessWidget {
                         leftTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
-                            reservedSize: 44,
+                            reservedSize: 48,
                             getTitlesWidget: (value, meta) {
                               return Text(
                                 MHelperFunctions.formatCurrency(value),
@@ -150,7 +173,9 @@ class StatsTrendChart extends StatelessWidget {
                         ),
                       ),
                       minX: 0,
-                      maxX: (points.length - 1).toDouble(),
+                      maxX: points.length <= 1
+                          ? 1
+                          : (points.length - 1).toDouble(),
                       minY: 0,
                       maxY: _maxY(points),
                       lineBarsData: [
@@ -165,10 +190,12 @@ class StatsTrendChart extends StatelessWidget {
                                 ),
                               )
                               .toList(),
-                          isCurved: true,
+                          isCurved: points.length > 2,
                           color: Colors.green,
                           barWidth: 3,
-                          dotData: const FlDotData(show: false),
+                          dotData: FlDotData(
+                            show: points.length <= 6,
+                          ),
                         ),
                         LineChartBarData(
                           spots: points
@@ -181,10 +208,12 @@ class StatsTrendChart extends StatelessWidget {
                                 ),
                               )
                               .toList(),
-                          isCurved: true,
+                          isCurved: points.length > 2,
                           color: Colors.red,
                           barWidth: 3,
-                          dotData: const FlDotData(show: false),
+                          dotData: FlDotData(
+                            show: points.length <= 6,
+                          ),
                         ),
                       ],
                     ),
@@ -197,7 +226,7 @@ class StatsTrendChart extends StatelessWidget {
     );
   }
 
-  double _maxY(List<MonthlyTrendPoint> points) {
+  double _maxY(List<TrendPoint> points) {
     final maxValue = points.fold<double>(
       0,
       (current, point) {

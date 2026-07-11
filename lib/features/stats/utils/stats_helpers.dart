@@ -16,8 +16,8 @@ class CategoryBreakdownItem {
   final double percentage;
 }
 
-class MonthlyTrendPoint {
-  const MonthlyTrendPoint({
+class TrendPoint {
+  const TrendPoint({
     required this.label,
     required this.income,
     required this.expense,
@@ -80,7 +80,22 @@ class StatsHelpers {
       ..sort((a, b) => b.amount.compareTo(a.amount));
   }
 
-  static List<MonthlyTrendPoint> groupByMonth(
+  static List<TrendPoint> groupTrend(
+    List<TransactionModel> transactions,
+    TransactionDateFilter period,
+  ) {
+    return switch (period) {
+      TransactionDateFilter.all => _groupByMonth(transactions),
+      TransactionDateFilter.thisMonth => _groupByDay(transactions),
+      TransactionDateFilter.thisWeek => _groupByDay(transactions),
+    };
+  }
+
+  static List<TrendPoint> groupByMonth(List<TransactionModel> transactions) {
+    return _groupByMonth(transactions);
+  }
+
+  static List<TrendPoint> _groupByMonth(
     List<TransactionModel> transactions,
   ) {
     final incomeByMonth = <String, double>{};
@@ -110,10 +125,46 @@ class StatsHelpers {
       final parts = month.split('-');
       final year = int.parse(parts[0]);
       final monthNumber = int.parse(parts[1]);
-      return MonthlyTrendPoint(
+      return TrendPoint(
         label: '$monthNumber/$year',
         income: incomeByMonth[month] ?? 0,
         expense: expenseByMonth[month] ?? 0,
+      );
+    }).toList();
+  }
+
+  static List<TrendPoint> _groupByDay(List<TransactionModel> transactions) {
+    final incomeByDay = <DateTime, double>{};
+    final expenseByDay = <DateTime, double>{};
+
+    for (final transaction in transactions) {
+      final day = DateTime(
+        transaction.dateTime.year,
+        transaction.dateTime.month,
+        transaction.dateTime.day,
+      );
+      final map = switch (transaction.type) {
+        TransactionType.income => incomeByDay,
+        TransactionType.expense => expenseByDay,
+      };
+      map.update(
+        day,
+        (value) => value + transaction.amount,
+        ifAbsent: () => transaction.amount,
+      );
+    }
+
+    final days = <DateTime>{
+      ...incomeByDay.keys,
+      ...expenseByDay.keys,
+    }.toList()
+      ..sort();
+
+    return days.map((day) {
+      return TrendPoint(
+        label: '${day.day}/${day.month}',
+        income: incomeByDay[day] ?? 0,
+        expense: expenseByDay[day] ?? 0,
       );
     }).toList();
   }
