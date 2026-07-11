@@ -5,6 +5,7 @@ import 'package:money_tracker_app/core/constants/colors.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
 import 'package:money_tracker_app/core/utils/helper_functions.dart';
 import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
+import 'package:money_tracker_app/features/transactions/view/transaction_detail_screen.dart';
 import 'package:money_tracker_app/features/transactions/view/widgets/transactions_chart.dart';
 import 'package:money_tracker_app/shared/widgets/appbar.dart';
 import 'package:money_tracker_app/shared/widgets/transaction_tile.dart';
@@ -54,7 +55,12 @@ class AllTransactionScreen extends StatelessWidget {
             builder: (context, state) {
               if (state is TransactionLoading) {
                 return Center(child: CircularProgressIndicator());
-              } else if (state is TransactionLoaded) {
+              } else if (state is TransactionLoaded ||
+                  state is TransactionSuccess) {
+                final transactions = state is TransactionLoaded
+                    ? state.transactions
+                    : (state as TransactionSuccess).transactions;
+
                 return Column(
                   children: [
                     Container(
@@ -76,15 +82,25 @@ class AllTransactionScreen extends StatelessWidget {
                     ListView.builder(
                       physics: NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
-                      itemCount: state.transactions.length,
+                      itemCount: transactions.length,
                       itemBuilder: (context, index) {
-                        final transaction = state.transactions[index];
+                        final transaction = transactions[index];
                         return MTransactionTile(
                           icon: categoryIcons[transaction.category.iconIndex],
                           title: transaction.category.title,
                           iconBgColor: Color(transaction.category.color),
                           amount: transaction.amount,
-                          time: transaction.time.toString(),
+                          time: MHelperFunctions.formatTime(
+                              transaction.dateTime),
+                          type: transaction.type,
+                          onTap: () {
+                            MHelperFunctions.navigateToScreen(
+                              context,
+                              TransactionDetailScreen(
+                                transaction: transaction,
+                              ),
+                            );
+                          },
                         );
                       },
                     ),

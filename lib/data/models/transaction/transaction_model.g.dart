@@ -20,9 +20,9 @@ class TransactionModelAdapter extends TypeAdapter<TransactionModel> {
       tId: fields[0] as String,
       category: fields[1] as CategoryModel,
       amount: fields[3] as double,
-      date: fields[4] as String,
+      dateTime: fields[4] as DateTime,
       type: fields[2] as TransactionType,
-      time: fields[5] as String,
+      note: fields[5] as String,
     );
   }
 
@@ -39,9 +39,9 @@ class TransactionModelAdapter extends TypeAdapter<TransactionModel> {
       ..writeByte(3)
       ..write(obj.amount)
       ..writeByte(4)
-      ..write(obj.date)
+      ..write(obj.dateTime)
       ..writeByte(5)
-      ..write(obj.time);
+      ..write(obj.note);
   }
 
   @override

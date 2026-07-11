@@ -9,6 +9,7 @@ import 'package:money_tracker_app/features/dashboard/widgets/gradient_card.dart'
 import 'package:money_tracker_app/features/dashboard/widgets/home_appbar.dart';
 import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
 import 'package:money_tracker_app/features/transactions/view/all_transactions_screen.dart';
+import 'package:money_tracker_app/features/transactions/view/transaction_detail_screen.dart';
 import 'package:money_tracker_app/shared/widgets/section_heading.dart';
 import 'package:money_tracker_app/shared/widgets/transaction_tile.dart';
 
@@ -106,7 +107,7 @@ class HomeScreen extends StatelessWidget {
                                 const EdgeInsets.symmetric(vertical: 8.0),
                             child: Text(
                               MHelperFunctions.formatDateHeader(
-                                  transaction.date),
+                                  transaction.dateTime),
                               style: Theme.of(context)
                                   .textTheme
                                   .titleSmall
@@ -121,8 +122,17 @@ class HomeScreen extends StatelessWidget {
                             title: transaction.category.title,
                             iconBgColor: Color(transaction.category.color),
                             amount: transaction.amount,
-                            time: transaction.time.toString(),
+                            time: MHelperFunctions.formatTime(
+                                transaction.dateTime),
                             type: transaction.type,
+                            onTap: () {
+                              MHelperFunctions.navigateToScreen(
+                                context,
+                                TransactionDetailScreen(
+                                  transaction: transaction,
+                                ),
+                              );
+                            },
                           ),
                         ],
                       );

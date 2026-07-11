@@ -19,17 +19,35 @@ class TransactionModel extends HiveObject {
   double amount;
 
   @HiveField(4)
-  String date;
+  DateTime dateTime;
 
   @HiveField(5)
-  String time;
+  String note;
 
   TransactionModel({
     required this.tId,
     required this.category,
     required this.amount,
-    required this.date,
+    required this.dateTime,
     required this.type,
-    required this.time,
+    this.note = '',
   });
+
+  TransactionModel copyWith({
+    String? tId,
+    CategoryModel? category,
+    TransactionType? type,
+    double? amount,
+    DateTime? dateTime,
+    String? note,
+  }) {
+    return TransactionModel(
+      tId: tId ?? this.tId,
+      category: category ?? this.category,
+      type: type ?? this.type,
+      amount: amount ?? this.amount,
+      dateTime: dateTime ?? this.dateTime,
+      note: note ?? this.note,
+    );
+  }
 }

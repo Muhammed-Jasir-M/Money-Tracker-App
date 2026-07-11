@@ -28,10 +28,14 @@ class MLineChart extends StatelessWidget {
 
     // Group transactions by date
     final dateMap = <DateTime, double>{};
-    for (var transaction in transactions) {
-      final date = transaction.date;
+    for (final transaction in transactions) {
+      final date = DateTime(
+        transaction.dateTime.year,
+        transaction.dateTime.month,
+        transaction.dateTime.day,
+      );
       dateMap.update(
-        date as DateTime,
+        date,
         (value) => value + transaction.amount,
         ifAbsent: () => transaction.amount,
       );

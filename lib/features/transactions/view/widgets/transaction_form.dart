@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -37,15 +36,13 @@ class _MTransactionFormState extends State<MTransactionForm> {
 
   final _categoryController = TextEditingController();
   final _amountController = TextEditingController();
+  final _noteController = TextEditingController();
 
   TransactionType _transactionType = TransactionType.income;
   CategoryModel _selectedCategory = CategoryModel.empty();
-
-  String _selectedDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
-  String _selectedTime = DateFormat('hh:mm a').format(DateTime.now());
+  DateTime _selectedDateTime = DateTime.now();
 
   bool isLoading = false;
-  bool isCategoryLoading = false;
   bool isExpanded = false;
 
   @override
@@ -59,15 +56,17 @@ class _MTransactionFormState extends State<MTransactionForm> {
       _selectedCategory = transaction.category;
       _categoryController.text = transaction.category.title;
       _amountController.text = transaction.amount.toString();
-      _selectedDate = transaction.date;
-      _selectedTime = transaction.time;
+      _noteController.text = transaction.note;
+      _selectedDateTime = transaction.dateTime;
       _transactionType = transaction.type;
     }
   }
 
   @override
   void dispose() {
+    _categoryController.dispose();
     _amountController.dispose();
+    _noteController.dispose();
     super.dispose();
   }
 
@@ -79,28 +78,16 @@ class _MTransactionFormState extends State<MTransactionForm> {
     return BlocListener<TransactionBloc, TransactionState>(
       listener: (context, state) {
         if (state is TransactionLoading) {
-          setState(() {
-            isLoading = true;
-          });
+          setState(() => isLoading = true);
         } else if (state is TransactionSuccess) {
-          setState(() {
-            isLoading = false;
-          });
-
-          if (isEditing) {
-            Navigator.pop(context);
-          }
-
+          setState(() => isLoading = false);
           Navigator.pop(context);
         } else if (state is TransactionError) {
-          setState(() {
-            isLoading = false;
-          });
-
+          setState(() => isLoading = false);
           MHelperFunctions.showSnackBar(
             message: state.message,
             context: context,
-            title: "Error",
+            title: 'Error',
             bgColor: Colors.red,
             icon: Icons.error,
           );
@@ -113,7 +100,6 @@ class _MTransactionFormState extends State<MTransactionForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// Category TextField
               MTextFormField(
                 controller: _categoryController,
                 hintText: 'Category',
@@ -128,96 +114,86 @@ class _MTransactionFormState extends State<MTransactionForm> {
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => AddCategoryScreen(),
+                      builder: (context) => const AddCategoryScreen(),
                     ),
                   );
 
                   if (mounted) {
-                    // ignore: use_build_context_synchronously
                     context.read<CategoryBloc>().add(LoadCategories());
                   }
                 },
               ),
-
-              isExpanded
-                  ? Container(
-                      width: MHelperFunctions.screenWidth(context),
-                      height: 200,
-                      decoration: BoxDecoration(
-                        color: isDark ? MColors.dark : MColors.light,
-                        borderRadius: BorderRadius.vertical(
-                          bottom: Radius.circular(15),
-                        ),
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.all(4),
-                        child: BlocBuilder<CategoryBloc, CategoryState>(
-                          builder: (context, state) {
-                            if (state is CategoryLoading) {
-                              return Center(
-                                child: CircularProgressIndicator(),
-                              );
-                            } else if (state is CategoryLoaded) {
-                              return ListView.builder(
-                                physics: BouncingScrollPhysics(),
-                                shrinkWrap: true,
-                                itemCount: state.categories.length,
-                                itemBuilder: (context, index) {
-                                  final reversedCategories =
-                                      state.categories.reversed.toList();
-                                  final category = reversedCategories[index];
-                                  return GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        _selectedCategory = category;
-                                        _categoryController.text =
-                                            category.title;
-                                      });
-                                    },
-                                    child: MTransactionTile(
-                                      icon: categoryIcons[category.iconIndex],
-                                      title: category.title,
-                                      showPriceDate: false,
-                                      iconBgColor: Color(category.color),
-                                    ),
-                                  );
+              if (isExpanded)
+                Container(
+                  width: MHelperFunctions.screenWidth(context),
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: isDark ? MColors.dark : MColors.light,
+                    borderRadius: const BorderRadius.vertical(
+                      bottom: Radius.circular(15),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: BlocBuilder<CategoryBloc, CategoryState>(
+                      builder: (context, state) {
+                        if (state is CategoryLoading) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        } else if (state is CategoryLoaded) {
+                          return ListView.builder(
+                            physics: const BouncingScrollPhysics(),
+                            shrinkWrap: true,
+                            itemCount: state.categories.length,
+                            itemBuilder: (context, index) {
+                              final reversedCategories =
+                                  state.categories.reversed.toList();
+                              final category = reversedCategories[index];
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedCategory = category;
+                                    _categoryController.text = category.title;
+                                    isExpanded = false;
+                                  });
                                 },
-                              );
-                            } else if (state is CategoryError) {
-                              return Center(
-                                child: Text(
-                                  'Error: ${state.message}',
-                                  style:
-                                      Theme.of(context).textTheme.titleMedium,
+                                child: MTransactionTile(
+                                  icon: categoryIcons[category.iconIndex],
+                                  title: category.title,
+                                  showPriceDate: false,
+                                  iconBgColor: Color(category.color),
                                 ),
                               );
-                            } else {
-                              return Center(
-                                child: Text(
-                                  'No Categories Found',
-                                  style:
-                                      Theme.of(context).textTheme.titleMedium,
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                      ),
-                    )
-                  : Container(),
-
+                            },
+                          );
+                        } else if (state is CategoryError) {
+                          return Center(
+                            child: Text(
+                              'Error: ${state.message}',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          );
+                        } else {
+                          return Center(
+                            child: Text(
+                              'No Categories Found',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ),
               const SizedBox(height: MSizes.spaceBtwItems),
-
-              /// Amount TextField
               MTextFormField(
                 controller: _amountController,
                 hintText: 'Amount',
                 prefixIcon: FontAwesomeIcons.indianRupeeSign,
                 keyboardType: TextInputType.number,
               ),
-
               const SizedBox(height: MSizes.spaceBtwItems),
-
               Row(
                 children: [
                   MRadioButton(
@@ -227,7 +203,7 @@ class _MTransactionFormState extends State<MTransactionForm> {
                     onChanged: (value) =>
                         setState(() => _transactionType = value!),
                   ),
-                  SizedBox(width: MSizes.sm),
+                  const SizedBox(width: MSizes.sm),
                   MRadioButton(
                     title: TransactionType.expense.name,
                     value: TransactionType.expense,
@@ -237,52 +213,63 @@ class _MTransactionFormState extends State<MTransactionForm> {
                   ),
                 ],
               ),
-
               const SizedBox(height: MSizes.spaceBtwItems),
-
-              /// Date TextField
               MTextFormField(
-                hintText: _selectedDate,
+                hintText: DateFormat('dd/MM/yyyy').format(_selectedDateTime),
                 prefixIcon: FontAwesomeIcons.calendar,
                 readOnly: true,
                 onTap: () async {
-                  DateTime? pickerDate = await showDatePicker(
+                  final pickerDate = await showDatePicker(
                     context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(Duration(days: 365)),
+                    initialDate: _selectedDateTime,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
                   );
 
-                  setState(() {
-                    _selectedDate = DateFormat(
-                      'dd/MM/yyyy',
-                    ).format(pickerDate ?? DateTime.now());
-                  });
+                  if (pickerDate != null) {
+                    setState(() {
+                      _selectedDateTime = DateTime(
+                        pickerDate.year,
+                        pickerDate.month,
+                        pickerDate.day,
+                        _selectedDateTime.hour,
+                        _selectedDateTime.minute,
+                      );
+                    });
+                  }
                 },
               ),
-
               const SizedBox(height: MSizes.spaceBtwItems),
-
-              /// Time TextField
               MTextFormField(
-                hintText: _selectedTime,
+                hintText: DateFormat('hh:mm a').format(_selectedDateTime),
                 prefixIcon: FontAwesomeIcons.clock,
                 readOnly: true,
                 onTap: () async {
-                  final TimeOfDay? pickedTime = await showTimePicker(
+                  final pickedTime = await showTimePicker(
                     context: context,
-                    initialTime: TimeOfDay.now(),
+                    initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
                   );
 
-                  setState(() {
-                    _selectedTime = pickedTime!.format(context);
-                  });
+                  if (pickedTime != null) {
+                    setState(() {
+                      _selectedDateTime = DateTime(
+                        _selectedDateTime.year,
+                        _selectedDateTime.month,
+                        _selectedDateTime.day,
+                        pickedTime.hour,
+                        pickedTime.minute,
+                      );
+                    });
+                  }
                 },
               ),
-
               const SizedBox(height: MSizes.spaceBtwItems),
-
-              /// Save Button
+              MTextFormField(
+                controller: _noteController,
+                hintText: 'Note (optional)',
+                prefixIcon: FontAwesomeIcons.noteSticky,
+              ),
+              const SizedBox(height: MSizes.spaceBtwItems),
               Center(
                 child: MButton(
                   btnTitle: isLoading
@@ -297,7 +284,6 @@ class _MTransactionFormState extends State<MTransactionForm> {
                   onTap: isLoading ? null : _validateAndSubmitTask,
                 ),
               ),
-
               const SizedBox(height: MSizes.spaceBtwSections),
             ],
           ),
@@ -307,22 +293,11 @@ class _MTransactionFormState extends State<MTransactionForm> {
   }
 
   void _validateAndSubmitTask() {
-    if (_selectedDate.isEmpty || _selectedTime.isEmpty) {
-      MHelperFunctions.showSnackBar(
-        message: 'Please select date & time',
-        context: context,
-        title: "Error",
-        bgColor: Colors.red,
-        icon: Icons.error,
-      );
-      return;
-    }
-
     if (_selectedCategory == CategoryModel.empty()) {
       MHelperFunctions.showSnackBar(
         message: 'Please select a category',
         context: context,
-        title: "Error",
+        title: 'Error',
         bgColor: Colors.red,
         icon: Icons.error,
       );
@@ -334,28 +309,36 @@ class _MTransactionFormState extends State<MTransactionForm> {
       MHelperFunctions.showSnackBar(
         message: 'Please enter a valid amount',
         context: context,
-        title: "Error",
+        title: 'Error',
         bgColor: Colors.red,
         icon: Icons.error,
       );
       return;
     }
 
-    final transaction = TransactionModel(
-      tId: DateTime.now().millisecondsSinceEpoch.toString(),
-      category: _selectedCategory,
-      amount: double.parse(_amountController.text),
-      date: _selectedDate,
-      time: _selectedTime,
-      type: _transactionType,
-    );
+    final bloc = context.read<TransactionBloc>();
 
-    if (widget.isEditing) {
-      BlocProvider.of<TransactionBloc>(context)
-          .add(UpdateTransaction(transaction));
+    if (widget.isEditing && widget.transaction != null) {
+      widget.transaction!
+        ..category = _selectedCategory
+        ..amount = amount
+        ..dateTime = _selectedDateTime
+        ..type = _transactionType
+        ..note = _noteController.text.trim();
+      bloc.add(UpdateTransaction(widget.transaction!));
     } else {
-      BlocProvider.of<TransactionBloc>(context)
-          .add(AddTransaction(transaction));
+      bloc.add(
+        AddTransaction(
+          TransactionModel(
+            tId: DateTime.now().millisecondsSinceEpoch.toString(),
+            category: _selectedCategory,
+            amount: amount,
+            dateTime: _selectedDateTime,
+            type: _transactionType,
+            note: _noteController.text.trim(),
+          ),
+        ),
+      );
     }
   }
 }

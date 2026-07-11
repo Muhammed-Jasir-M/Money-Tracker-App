@@ -109,25 +109,27 @@ class MHelperFunctions {
     );
   }
 
-  static String formatDateHeader(String dateString) {
-    try {
-      final date = DateTime.parse(dateString);
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final yesterday = today.subtract(const Duration(days: 1));
+  static String formatDateHeader(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final inputDate = DateTime(date.year, date.month, date.day);
 
-      final inputDate = DateTime(date.year, date.month, date.day);
-
-      if (inputDate == today) {
-        return 'Today';
-      } else if (inputDate == yesterday) {
-        return 'Yesterday';
-      } else {
-        return DateFormat('MMM d, y').format(date);
-      }
-    } catch (e) {
-      return dateString;
+    if (inputDate == today) {
+      return 'Today';
+    } else if (inputDate == yesterday) {
+      return 'Yesterday';
+    } else {
+      return DateFormat('MMM d, y').format(date);
     }
+  }
+
+  static String formatTime(DateTime dateTime) {
+    return DateFormat('hh:mm a').format(dateTime);
+  }
+
+  static String formatDateTime(DateTime dateTime) {
+    return '${formatDate(dateTime)} ${formatTime(dateTime)}';
   }
 
   static String formatCurrency(double amount) {

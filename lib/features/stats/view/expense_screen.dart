@@ -7,6 +7,7 @@ import 'package:money_tracker_app/core/utils/helper_functions.dart';
 import 'package:money_tracker_app/data/models/enum/enum.dart';
 import 'package:money_tracker_app/features/stats/widgets/chart_slider.dart';
 import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
+import 'package:money_tracker_app/features/transactions/view/transaction_detail_screen.dart';
 import 'package:money_tracker_app/shared/widgets/transaction_tile.dart';
 
 class ExpenseScreen extends StatelessWidget {
@@ -106,7 +107,7 @@ class ExpenseScreen extends StatelessWidget {
                                   const EdgeInsets.symmetric(vertical: 8.0),
                               child: Text(
                                 MHelperFunctions.formatDateHeader(
-                                    transaction.date),
+                                    transaction.dateTime),
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleSmall
@@ -121,8 +122,17 @@ class ExpenseScreen extends StatelessWidget {
                               title: transaction.category.title,
                               iconBgColor: Color(transaction.category.color),
                               amount: transaction.amount,
-                              time: transaction.time.toString(),
+                              time: MHelperFunctions.formatTime(
+                                  transaction.dateTime),
                               type: transaction.type,
+                              onTap: () {
+                                MHelperFunctions.navigateToScreen(
+                                  context,
+                                  TransactionDetailScreen(
+                                    transaction: transaction,
+                                  ),
+                                );
+                              },
                             ),
                           ],
                         );
