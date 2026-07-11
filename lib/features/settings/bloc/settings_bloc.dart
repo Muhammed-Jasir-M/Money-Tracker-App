@@ -8,14 +8,22 @@ part 'settings_event.dart';
 part 'settings_state.dart';
 
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
-  SettingsBloc({required SettingsRepository repository})
-      : _repository = repository,
-        super(SettingsInitial()) {
+  SettingsBloc({
+    required SettingsRepository repository,
+    AppSettings? initialSettings,
+  })  : _repository = repository,
+        super(
+          initialSettings != null
+              ? SettingsLoaded(initialSettings)
+              : SettingsInitial(),
+        ) {
     on<LoadSettings>(_onLoadSettings);
     on<UpdateThemeMode>(_onUpdateThemeMode);
     on<UpdateUserName>(_onUpdateUserName);
 
-    add(LoadSettings());
+    if (initialSettings == null) {
+      add(LoadSettings());
+    }
   }
 
   final SettingsRepository _repository;

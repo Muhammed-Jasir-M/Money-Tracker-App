@@ -8,6 +8,10 @@ class SettingsRepository {
 
   final SettingsLocalDatasource _datasource;
 
+  AppSettings getSettingsSync() {
+    return _datasource.getSettings();
+  }
+
   Future<AppSettings> getSettings() async {
     return _datasource.getSettings();
   }

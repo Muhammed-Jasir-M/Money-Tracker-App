@@ -124,6 +124,9 @@ class HomeScreen extends StatelessWidget {
                                     .titleSmall
                                     ?.copyWith(
                                       fontWeight: FontWeight.bold,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
                                     ),
                               ),
                             ),

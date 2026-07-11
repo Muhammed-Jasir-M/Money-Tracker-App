@@ -42,7 +42,10 @@ class MAppTheme {
     scaffoldBackgroundColor: MColors.bgLight,
     disabledColor: MColors.lightGrey,
     appBarTheme: MAppbarTheme.lightAppbarTheme,
-    textTheme: MTextTheme.lightTextTheme,
+    textTheme: MTextTheme.lightTextTheme.apply(
+      bodyColor: MColors.black,
+      displayColor: MColors.black,
+    ),
     iconTheme: const IconThemeData(color: MColors.darkGrey, size: MSizes.iconMd),
     colorScheme: const ColorScheme.light(
       surface: MColors.bgLight,
@@ -76,7 +79,10 @@ class MAppTheme {
     scaffoldBackgroundColor: MColors.bgDark,
     disabledColor: MColors.darkGrey,
     appBarTheme: MAppbarTheme.darkAppbarTheme,
-    textTheme: MTextTheme.darkTextTheme,
+    textTheme: MTextTheme.darkTextTheme.apply(
+      bodyColor: MColors.white,
+      displayColor: MColors.white,
+    ),
     iconTheme: const IconThemeData(color: MColors.white, size: MSizes.iconMd),
     colorScheme: const ColorScheme.dark(
       surface: MColors.bgDark,

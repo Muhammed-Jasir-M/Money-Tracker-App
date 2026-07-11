@@ -36,11 +36,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   TransactionFilters _filters = const TransactionFilters();
   bool _filtersExpanded = false;
   late final TextEditingController _searchController;
+  late final FocusNode _searchFocusNode;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _searchFocusNode = FocusNode();
+    _searchFocusNode.addListener(_onSearchFocusChange);
     _applyNavigationRequest(fromInit: true);
   }
 
@@ -54,8 +57,16 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   @override
   void dispose() {
+    _searchFocusNode.removeListener(_onSearchFocusChange);
+    _searchFocusNode.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSearchFocusChange() {
+    if (_searchFocusNode.hasFocus && _filtersExpanded) {
+      setState(() => _filtersExpanded = false);
+    }
   }
 
   void _applyNavigationRequest({bool fromInit = false}) {
@@ -112,6 +123,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   void _toggleFilters() {
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _filtersExpanded = !_filtersExpanded);
   }
 
@@ -189,6 +201,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               ),
               child: MTextFormField(
                 controller: _searchController,
+                focusNode: _searchFocusNode,
                 label: 'Search',
                 hintText: 'Note, amount, or category',
                 prefixIcon: Icons.search,
@@ -278,7 +291,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                   style: Theme.of(context)
                                       .textTheme
                                       .titleSmall
-                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      ),
                                 ),
                               ),
                             MTransactionTile(

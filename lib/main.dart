@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:money_tracker_app/app.dart';
 import 'package:money_tracker_app/core/bloc/simple_bloc_observer.dart';
@@ -38,6 +39,12 @@ Future<void> main() async {
   final settingsRepository = SettingsRepository(
     datasource: SettingsLocalDatasource(box: settingsBox),
   );
+  final initialSettings = settingsRepository.getSettingsSync();
+
+  await GoogleFonts.pendingFonts([
+    GoogleFonts.poppins(),
+    GoogleFonts.lato(),
+  ]);
 
   Bloc.observer = SimpleBlocObserver();
 
@@ -55,8 +62,10 @@ Future<void> main() async {
           ),
         ),
         BlocProvider(
-          create: (context) =>
-              SettingsBloc(repository: settingsRepository),
+          create: (context) => SettingsBloc(
+            repository: settingsRepository,
+            initialSettings: initialSettings,
+          ),
         ),
       ],
       child: const MyApp(),

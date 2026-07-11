@@ -20,6 +20,7 @@ class MTextFormField extends StatelessWidget {
     this.isDense = false,
     this.suffixWidget,
     this.onChanged,
+    this.focusNode,
     this.textAlign = TextAlign.start,
     this.style,
     this.contentPadding,
@@ -36,6 +37,7 @@ class MTextFormField extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onIconPressed;
   final ValueChanged<String>? onChanged;
+  final FocusNode? focusNode;
   final Widget? suffixWidget;
   final TextAlign textAlign;
   final TextStyle? style;
@@ -46,6 +48,7 @@ class MTextFormField extends StatelessWidget {
     final isDark = MHelperFunctions.isDarkMode(context);
 
     final field = TextFormField(
+      focusNode: focusNode,
       onTap: onTap,
       readOnly: readOnly,
       controller: controller,
