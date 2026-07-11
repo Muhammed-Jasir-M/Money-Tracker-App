@@ -1,16 +1,15 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
+import 'package:money_tracker_app/data/repositories/transaction_repository.dart';
 
 part 'transaction_event.dart';
 part 'transaction_state.dart';
 
 class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
-  final Box<TransactionModel> transactionBox;
-
-  TransactionBloc({required this.transactionBox})
-      : super(TransactionInitial()) {
+  TransactionBloc({required TransactionRepository repository})
+      : _repository = repository,
+        super(TransactionInitial()) {
     on<LoadTransaction>(_onLoadTransaction);
     on<AddTransaction>(_onAddTransaction);
     on<UpdateTransaction>(_onUpdateTransaction);
@@ -19,13 +18,15 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     add(LoadTransaction());
   }
 
+  final TransactionRepository _repository;
+
   Future<void> _onLoadTransaction(
     LoadTransaction event,
     Emitter<TransactionState> emit,
   ) async {
     emit(TransactionLoading());
     try {
-      final transactions = transactionBox.values.toList();
+      final transactions = await _repository.getAll();
       emit(TransactionLoaded(transactions));
     } catch (e) {
       emit(TransactionError(e.toString()));
@@ -38,11 +39,11 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
   ) async {
     emit(TransactionLoading());
     try {
-      await transactionBox.add(event.transaction);
-      final transactions = transactionBox.values.toList();
+      await _repository.add(event.transaction);
+      final transactions = await _repository.getAll();
       emit(TransactionSuccess(
         transactions: transactions,
-        message: "Transaction added successfully",
+        message: 'Transaction added successfully',
       ));
     } catch (e) {
       emit(TransactionError(e.toString()));
@@ -55,12 +56,11 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
   ) async {
     emit(TransactionLoading());
     try {
-      final key = event.transaction.key;
-      await transactionBox.put(key, event.transaction);
-      final transactions = transactionBox.values.toList();
+      await _repository.update(event.transaction);
+      final transactions = await _repository.getAll();
       emit(TransactionSuccess(
         transactions: transactions,
-        message: "Transaction updated successfully",
+        message: 'Transaction updated successfully',
       ));
     } catch (e) {
       emit(TransactionError(e.toString()));
@@ -73,12 +73,11 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
   ) async {
     emit(TransactionLoading());
     try {
-      final key = event.transaction.key;
-      await transactionBox.delete(key);
-      final transactions = transactionBox.values.toList();
+      await _repository.delete(event.transaction);
+      final transactions = await _repository.getAll();
       emit(TransactionSuccess(
         transactions: transactions,
-        message: "Transaction deleted successfully",
+        message: 'Transaction deleted successfully',
       ));
     } catch (e) {
       emit(TransactionError(e.toString()));
