@@ -24,3 +24,12 @@ class UpdateUserName extends SettingsEvent {
   @override
   List<Object?> get props => [userName];
 }
+
+class UpdateCurrencySymbol extends SettingsEvent {
+  UpdateCurrencySymbol(this.currencySymbol);
+
+  final String currencySymbol;
+
+  @override
+  List<Object?> get props => [currencySymbol];
+}

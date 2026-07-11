@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:money_tracker_app/core/currency/currency_scope.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
+import 'package:money_tracker_app/core/utils/money_format.dart';
 import 'package:money_tracker_app/features/stats/utils/stats_helpers.dart';
 
 class CategoryRankedList extends StatelessWidget {
@@ -14,6 +16,8 @@ class CategoryRankedList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = CurrencyScope.of(context);
+
     return Column(
       children: items.map((item) {
         return Material(
@@ -45,7 +49,7 @@ class CategoryRankedList extends StatelessWidget {
                   ),
                   const SizedBox(width: MSizes.sm),
                   Text(
-                    '\u{20B9}${item.amount.toStringAsFixed(0)}',
+                    MoneyFormat.amount(item.amount, symbol, decimals: 0),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),

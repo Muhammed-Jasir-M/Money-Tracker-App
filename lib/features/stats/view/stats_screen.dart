@@ -5,6 +5,7 @@ import 'package:money_tracker_app/core/utils/helper_functions.dart';
 import 'package:money_tracker_app/data/models/enum/enum.dart';
 import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
 import 'package:money_tracker_app/features/stats/utils/stats_helpers.dart';
+import 'package:money_tracker_app/shared/widgets/empty_state.dart';
 import 'package:money_tracker_app/features/stats/widgets/category_breakdown_section.dart';
 import 'package:money_tracker_app/features/stats/widgets/stats_period_chips.dart';
 import 'package:money_tracker_app/features/stats/widgets/stats_summary_row.dart';
@@ -76,6 +77,21 @@ class _StatsScreenState extends State<StatsScreen> {
 
         final totalIncome = StatsHelpers.sumAmount(incomeTransactions);
         final totalExpense = StatsHelpers.sumAmount(expenseTransactions);
+        final hasTransactions = transactions.isNotEmpty;
+
+        if (!hasTransactions) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(MSizes.defaultSpace),
+              child: const MEmptyState(
+                icon: Icons.bar_chart_outlined,
+                title: 'No stats to show',
+                subtitle:
+                    'Add transactions to see charts and category breakdowns',
+              ),
+            ),
+          );
+        }
 
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(

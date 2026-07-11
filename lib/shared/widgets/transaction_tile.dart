@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:money_tracker_app/core/currency/currency_scope.dart';
 import 'package:money_tracker_app/core/constants/colors.dart';
 import 'package:money_tracker_app/core/utils/helper_functions.dart';
+import 'package:money_tracker_app/core/utils/money_format.dart';
 import 'package:money_tracker_app/data/models/enum/enum.dart';
-
 class MTransactionTile extends StatelessWidget {
   const MTransactionTile({
     super.key,
@@ -35,6 +36,7 @@ class MTransactionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = MHelperFunctions.isDarkMode(context);
+    final symbol = CurrencyScope.of(context);
     final tileBg = bgColor ?? (isDark ? MColors.cardDark : MColors.cardLight);
     final subtitleColor =
         isDark ? const Color(0xFF9E9E9E) : MColors.darkerGrey;
@@ -145,7 +147,12 @@ class MTransactionTile extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
                                     Text(
-                                      '${type == TransactionType.income ? '+' : '-'}${amount.toStringAsFixed(2)}',
+                                      MoneyFormat.signed(
+                                        amount,
+                                        symbol,
+                                        isIncome:
+                                            type == TransactionType.income,
+                                      ),
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: type == TransactionType.income

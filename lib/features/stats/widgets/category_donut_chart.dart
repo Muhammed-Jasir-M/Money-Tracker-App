@@ -1,5 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:money_tracker_app/core/currency/currency_scope.dart';
+import 'package:money_tracker_app/core/utils/money_format.dart';
 import 'package:money_tracker_app/features/stats/utils/stats_helpers.dart';
 
 class CategoryDonutChart extends StatelessWidget {
@@ -22,6 +24,7 @@ class CategoryDonutChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = CurrencyScope.of(context);
     final sections = items.asMap().entries.map((entry) {
       return PieChartSectionData(
         color: Color(entry.value.color),
@@ -98,7 +101,7 @@ class CategoryDonutChart extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '\u{20B9}${total.toStringAsFixed(0)}',
+                            MoneyFormat.amount(total, symbol, decimals: 0),
                             style: Theme.of(context)
                                 .textTheme
                                 .titleMedium

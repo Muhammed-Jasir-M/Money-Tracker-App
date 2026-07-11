@@ -25,4 +25,9 @@ class SettingsRepository {
     await _datasource.saveUserName(userName);
     return _datasource.getSettings();
   }
+
+  Future<AppSettings> updateCurrencySymbol(String currencySymbol) async {
+    await _datasource.saveCurrencySymbol(currencySymbol);
+    return _datasource.getSettings();
+  }
 }

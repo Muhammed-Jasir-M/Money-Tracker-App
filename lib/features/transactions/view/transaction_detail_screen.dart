@@ -6,6 +6,8 @@ import 'package:money_tracker_app/core/constants/sizes.dart';
 import 'package:money_tracker_app/core/utils/helper_functions.dart';
 import 'package:money_tracker_app/data/models/enum/enum.dart';
 import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
+import 'package:money_tracker_app/core/currency/currency_scope.dart';
+import 'package:money_tracker_app/core/utils/money_format.dart';
 import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
 import 'package:money_tracker_app/features/transactions/view/edit_transaction_screen.dart';
 import 'package:money_tracker_app/shared/widgets/appbar.dart';
@@ -26,6 +28,7 @@ class TransactionDetailScreen extends StatelessWidget {
     final subtitleColor =
         isDark ? const Color(0xFF9E9E9E) : MColors.darkerGrey;
     final isIncome = transaction.type == TransactionType.income;
+    final symbol = CurrencyScope.of(context);
 
     return BlocListener<TransactionBloc, TransactionState>(
       listener: (context, state) {
@@ -99,7 +102,11 @@ class TransactionDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: MSizes.sm),
                     Text(
-                      '${isIncome ? '+' : '-'}${transaction.amount.toStringAsFixed(2)}',
+                      MoneyFormat.signed(
+                        transaction.amount,
+                        symbol,
+                        isIncome: isIncome,
+                      ),
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                             color: isIncome ? Colors.green : Colors.red,
                             fontWeight: FontWeight.bold,

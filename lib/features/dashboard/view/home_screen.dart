@@ -9,6 +9,7 @@ import 'package:money_tracker_app/features/dashboard/widgets/gradient_card.dart'
 import 'package:money_tracker_app/features/dashboard/widgets/home_appbar.dart';
 import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
 import 'package:money_tracker_app/features/transactions/view/transaction_detail_screen.dart';
+import 'package:money_tracker_app/shared/widgets/empty_state.dart';
 import 'package:money_tracker_app/shared/widgets/section_heading.dart';
 import 'package:money_tracker_app/shared/widgets/transaction_tile.dart';
 
@@ -89,11 +90,10 @@ class HomeScreen extends StatelessWidget {
 
                 /// Recent Transactions List  
                 if (recent.isEmpty)
-                  const SizedBox(
-                    height: 50,
-                    child: Center(
-                      child: Text('No transactions yet'),
-                    ),
+                  const MEmptyState(
+                    icon: Icons.receipt_long_outlined,
+                    title: 'No transactions yet',
+                    subtitle: 'Tap + to add your first income or expense',
                   )
                 else
                   ListView.builder(

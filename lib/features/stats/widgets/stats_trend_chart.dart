@@ -1,8 +1,10 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:money_tracker_app/core/currency/currency_scope.dart';
 import 'package:money_tracker_app/core/constants/colors.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
 import 'package:money_tracker_app/core/utils/helper_functions.dart';
+import 'package:money_tracker_app/core/utils/money_format.dart';
 import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
 import 'package:money_tracker_app/features/stats/utils/stats_helpers.dart';
 import 'package:money_tracker_app/features/transactions/utils/transaction_filters.dart';
@@ -37,6 +39,7 @@ class StatsTrendChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = MHelperFunctions.isDarkMode(context);
+    final symbol = CurrencyScope.of(context);
     final points = StatsHelpers.groupTrend(transactions, period);
 
     return Container(
@@ -106,8 +109,11 @@ class StatsTrendChart extends StatelessWidget {
                                 ),
                                 children: [
                                   TextSpan(
-                                    text:
-                                        '\u{20B9}${value.toStringAsFixed(0)}',
+                                    text: MoneyFormat.amount(
+                                      value,
+                                      symbol,
+                                      decimals: 0,
+                                    ),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 14,
@@ -161,7 +167,7 @@ class StatsTrendChart extends StatelessWidget {
                             reservedSize: 48,
                             getTitlesWidget: (value, meta) {
                               return Text(
-                                MHelperFunctions.formatCurrency(value),
+                                MHelperFunctions.formatCurrency(value, symbol),
                                 style: const TextStyle(
                                   fontSize: 10,
                                   color: Colors.grey,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:money_tracker_app/core/constants/currencies.dart';
 import 'package:money_tracker_app/core/constants/colors.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
 import 'package:money_tracker_app/core/utils/helper_functions.dart';
@@ -274,30 +275,81 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _SettingsSectionCard(
               isDark: isDark,
               title: 'Appearance',
-              child: SegmentedButton<ThemeMode>(
-                segments: [
-                  ButtonSegment(
-                    value: ThemeMode.system,
-                    label: const Text('System'),
-                    icon: Icon(Icons.brightness_auto, color: MColors.primary),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Theme',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
-                  ButtonSegment(
-                    value: ThemeMode.light,
-                    label: const Text('Light'),
-                    icon: Icon(Icons.light_mode, color: MColors.primary),
+                  const SizedBox(height: MSizes.sm),
+                  SegmentedButton<ThemeMode>(
+                    segments: [
+                      ButtonSegment(
+                        value: ThemeMode.system,
+                        label: const Text('System'),
+                        icon: Icon(Icons.brightness_auto, color: MColors.primary),
+                      ),
+                      ButtonSegment(
+                        value: ThemeMode.light,
+                        label: const Text('Light'),
+                        icon: Icon(Icons.light_mode, color: MColors.primary),
+                      ),
+                      ButtonSegment(
+                        value: ThemeMode.dark,
+                        label: const Text('Dark'),
+                        icon: Icon(Icons.dark_mode, color: MColors.primary),
+                      ),
+                    ],
+                    selected: {settings.themeMode},
+                    onSelectionChanged: (selection) {
+                      context
+                          .read<SettingsBloc>()
+                          .add(UpdateThemeMode(selection.first));
+                    },
                   ),
-                  ButtonSegment(
-                    value: ThemeMode.dark,
-                    label: const Text('Dark'),
-                    icon: Icon(Icons.dark_mode, color: MColors.primary),
+                  const SizedBox(height: MSizes.md),
+                  Text(
+                    'Currency',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  const SizedBox(height: MSizes.sm),
+                  Wrap(
+                    spacing: MSizes.sm,
+                    runSpacing: MSizes.sm,
+                    children: CurrencyOptions.symbols.map((symbol) {
+                      final selected = settings.currencySymbol == symbol;
+                      return ChoiceChip(
+                        label: Text(
+                          symbol,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight:
+                                selected ? FontWeight.bold : FontWeight.w500,
+                          ),
+                        ),
+                        selected: selected,
+                        onSelected: (_) {
+                          context
+                              .read<SettingsBloc>()
+                              .add(UpdateCurrencySymbol(symbol));
+                        },
+                        selectedColor: MColors.primary.withValues(alpha: 0.2),
+                        side: BorderSide(
+                          color: selected
+                              ? MColors.primary
+                              : (isDark
+                                  ? MColors.outline
+                                  : MColors.outline.withValues(alpha: 0.5)),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ],
-                selected: {settings.themeMode},
-                onSelectionChanged: (selection) {
-                  context
-                      .read<SettingsBloc>()
-                      .add(UpdateThemeMode(selection.first));
-                },
               ),
             ),
             const SizedBox(height: MSizes.md),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
+import 'package:money_tracker_app/core/utils/money_format.dart';
 import 'package:money_tracker_app/shared/widgets/confirm_dialog.dart';
 
 class MHelperFunctions {
@@ -125,13 +126,8 @@ class MHelperFunctions {
     return '${formatDate(dateTime)} ${formatTime(dateTime)}';
   }
 
-  static String formatCurrency(double amount) {
-    if (amount >= 1000000) {
-      return '${(amount / 1000000).toStringAsFixed(1)}M';
-    } else if (amount >= 1000) {
-      return '${(amount / 1000).toStringAsFixed(1)}K';
-    }
-    return amount.toStringAsFixed(0);
+  static String formatCurrency(double amount, [String symbol = '₹']) {
+    return MoneyFormat.compact(amount, symbol);
   }
 
   static String formatDate(DateTime date) {

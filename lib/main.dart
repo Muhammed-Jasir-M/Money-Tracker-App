@@ -13,6 +13,7 @@ import 'package:money_tracker_app/data/models/transaction/transaction_model.dart
 import 'package:money_tracker_app/data/repositories/category_repository.dart';
 import 'package:money_tracker_app/data/repositories/settings_repository.dart';
 import 'package:money_tracker_app/data/repositories/transaction_repository.dart';
+import 'package:money_tracker_app/data/seed/default_categories.dart';
 import 'package:money_tracker_app/features/categories/bloc/category_bloc.dart';
 import 'package:money_tracker_app/features/settings/bloc/settings_bloc.dart';
 import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
@@ -45,6 +46,10 @@ Future<void> main() async {
     GoogleFonts.poppins(),
     GoogleFonts.lato(),
   ]);
+
+  await DefaultCategoriesSeeder.seedIfEmpty(
+    categoryRepository: categoryRepository,
+  );
 
   Bloc.observer = SimpleBlocObserver();
 

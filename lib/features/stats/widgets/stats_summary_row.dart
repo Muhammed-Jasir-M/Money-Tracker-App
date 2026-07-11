@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:money_tracker_app/core/currency/currency_scope.dart';
 import 'package:money_tracker_app/core/constants/colors.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
 import 'package:money_tracker_app/core/utils/helper_functions.dart';
+import 'package:money_tracker_app/core/utils/money_format.dart';
 
 class StatsSummaryRow extends StatelessWidget {
   const StatsSummaryRow({
@@ -67,6 +69,8 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = CurrencyScope.of(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: MSizes.sm,
@@ -90,7 +94,7 @@ class _SummaryCard extends StatelessWidget {
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
-              '\u{20B9}${amount.toStringAsFixed(0)}',
+              MoneyFormat.amount(amount, symbol, decimals: 0),
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),

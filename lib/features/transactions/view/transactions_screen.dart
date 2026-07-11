@@ -15,6 +15,7 @@ import 'package:money_tracker_app/features/transactions/utils/transaction_filter
 import 'package:money_tracker_app/features/transactions/view/transaction_detail_screen.dart';
 import 'package:money_tracker_app/features/transactions/view/widgets/category_picker_sheet.dart';
 import 'package:money_tracker_app/shared/widgets/appbar.dart';
+import 'package:money_tracker_app/shared/widgets/empty_state.dart';
 import 'package:money_tracker_app/shared/widgets/text_form_field.dart';
 import 'package:money_tracker_app/shared/widgets/transaction_tile.dart';
 
@@ -258,13 +259,16 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     return false;
                   },
                   child: filtered.isEmpty
-                  ? Center(
-                      child: Text(
-                        transactions.isEmpty
-                            ? 'No transactions yet'
-                            : 'No transactions match your filters',
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
+                  ? MEmptyState(
+                      icon: transactions.isEmpty
+                          ? Icons.receipt_long_outlined
+                          : Icons.search_off_outlined,
+                      title: transactions.isEmpty
+                          ? 'No transactions yet'
+                          : 'No matches found',
+                      subtitle: transactions.isEmpty
+                          ? 'Tap + to record your first transaction'
+                          : 'Try changing search or filters',
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.all(MSizes.defaultSpace),

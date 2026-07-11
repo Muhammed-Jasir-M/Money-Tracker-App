@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:money_tracker_app/core/currency/currency_scope.dart';
 import 'package:money_tracker_app/core/theme/theme.dart';
 import 'package:money_tracker_app/features/settings/bloc/settings_bloc.dart';
 import 'package:money_tracker_app/features/shell/view/main_screen.dart';
@@ -11,9 +12,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, state) {
-        final themeMode = state is SettingsLoaded
-            ? state.settings.themeMode
-            : ThemeMode.system;
+        final settings = state is SettingsLoaded ? state.settings : null;
+        final themeMode = settings?.themeMode ?? ThemeMode.system;
+        final currencySymbol = settings?.currencySymbol ?? '₹';
 
         return MaterialApp(
           debugShowCheckedModeBanner: false,
@@ -21,6 +22,12 @@ class MyApp extends StatelessWidget {
           themeMode: themeMode,
           theme: MAppTheme.lightTheme,
           darkTheme: MAppTheme.darkTheme,
+          builder: (context, child) {
+            return CurrencyScope(
+              symbol: currencySymbol,
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
           home: const MainScreen(),
         );
       },

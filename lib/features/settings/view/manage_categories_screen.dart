@@ -10,6 +10,7 @@ import 'package:money_tracker_app/features/categories/view/add_category_screen.d
 import 'package:money_tracker_app/shared/widgets/appbar.dart';
 import 'package:money_tracker_app/shared/widgets/button.dart';
 import 'package:money_tracker_app/shared/widgets/confirm_dialog.dart';
+import 'package:money_tracker_app/shared/widgets/empty_state.dart';
 import 'package:money_tracker_app/shared/widgets/transaction_tile.dart';
 
 class ManageCategoriesScreen extends StatelessWidget {
@@ -99,7 +100,13 @@ class ManageCategoriesScreen extends StatelessWidget {
                 };
 
                 if (categories.isEmpty) {
-                  return const Center(child: Text('No categories yet'));
+                  return MEmptyState(
+                    icon: Icons.category_outlined,
+                    title: 'No categories yet',
+                    subtitle: 'Add categories to organize your transactions',
+                    actionLabel: 'Add category',
+                    onAction: () => _openAdd(context),
+                  );
                 }
 
                 return ListView.builder(
