@@ -71,13 +71,16 @@ class _MainScreenState extends State<MainScreen> {
       const SettingsScreen(),
     ];
 
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
+
     return Scaffold(
       bottomNavigationBar: MBottomNavbar(
         currentIndex: _currentIndex,
         onIndexChange: _switchTab,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: const MFloatingActionButton(),
+      floatingActionButton:
+          keyboardVisible ? null : const MFloatingActionButton(),
       body: SafeArea(child: screens[_currentIndex]),
     );
   }
