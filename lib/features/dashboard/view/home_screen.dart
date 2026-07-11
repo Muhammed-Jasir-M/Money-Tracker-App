@@ -8,13 +8,21 @@ import 'package:money_tracker_app/data/models/transaction/transaction_model.dart
 import 'package:money_tracker_app/features/dashboard/widgets/gradient_card.dart';
 import 'package:money_tracker_app/features/dashboard/widgets/home_appbar.dart';
 import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
-import 'package:money_tracker_app/features/transactions/view/all_transactions_screen.dart';
 import 'package:money_tracker_app/features/transactions/view/transaction_detail_screen.dart';
 import 'package:money_tracker_app/shared/widgets/section_heading.dart';
 import 'package:money_tracker_app/shared/widgets/transaction_tile.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({
+    super.key,
+    this.onViewAllTransactions,
+    this.onOpenSettings,
+  });
+
+  final VoidCallback? onViewAllTransactions;
+  final VoidCallback? onOpenSettings;
+
+  static const _recentLimit = 5;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +32,7 @@ class HomeScreen extends StatelessWidget {
           MHelperFunctions.showSnackBar(
             message: state.message,
             context: context,
-            title: "Error",
+            title: 'Error',
             bgColor: Colors.red,
             icon: Icons.error,
           );
@@ -32,7 +40,7 @@ class HomeScreen extends StatelessWidget {
           MHelperFunctions.showSnackBar(
             message: state.message,
             context: context,
-            title: "Success",
+            title: 'Success',
             bgColor: Colors.green,
             icon: Icons.check_circle,
           );
@@ -49,6 +57,9 @@ class HomeScreen extends StatelessWidget {
           _ => <TransactionModel>[],
         };
 
+        final sorted = List<TransactionModel>.from(transactions)
+          ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
+        final recent = sorted.take(_recentLimit).toList();
         final totals = _calculateTotals(transactions);
 
         return SingleChildScrollView(
@@ -56,74 +67,75 @@ class HomeScreen extends StatelessWidget {
             padding: EdgeInsets.all(MSizes.defaultSpace),
             child: Column(
               children: [
-                // Appbar
-                MHomeAppbar(),
+                /// Home Appbar
+                MHomeAppbar(onOpenSettings: onOpenSettings),
                 const SizedBox(height: 20),
 
-                // Gradient Balance Card
+                /// Balance Card
                 MGradientBalanceCard(
                   totalBalance: totals['balance'] ?? 0,
                   totalIncome: totals['income'] ?? 0,
                   totalExpense: totals['expense'] ?? 0,
                 ),
-
                 const SizedBox(height: 20),
 
-                // Section Heading
+                /// Recent Transactions Heading
                 MSectionHeading(
-                  title: 'Transactions',
-                  showActionbutton: true,
-                  onPressed: () {
-                    MHelperFunctions.navigateToScreen(
-                      context,
-                      AllTransactionScreen(),
-                    );
-                  },
+                  title: 'Recent Transactions',
+                  showActionbutton: transactions.isNotEmpty,
+                  onPressed: onViewAllTransactions,
                 ),
-
                 const SizedBox(height: MSizes.sm),
 
-                // Transaction Tile
-                if (transactions.isEmpty)
+                /// Recent Transactions List  
+                if (recent.isEmpty)
                   const SizedBox(
                     height: 50,
                     child: Center(
-                      child: Text('No transactions availablel'),
+                      child: Text('No transactions yet'),
                     ),
                   )
                 else
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: transactions.length,
+                    itemCount: recent.length,
                     itemBuilder: (context, index) {
-                      final transaction = transactions[index];
+                      final transaction = recent[index];
+                      final showHeader = index == 0 ||
+                          !MHelperFunctions.isSameDay(
+                            transaction.dateTime,
+                            recent[index - 1].dateTime,
+                          );
 
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 8.0),
-                            child: Text(
-                              MHelperFunctions.formatDateHeader(
-                                  transaction.dateTime),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleSmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          if (showHeader)
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Text(
+                                MHelperFunctions.formatDateHeader(
+                                  transaction.dateTime,
+                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
                             ),
-                          ),
                           MTransactionTile(
-                            icon:
-                                categoryIcons[transaction.category.iconIndex],
+                            icon: categoryIcons[
+                                transaction.category.iconIndex],
                             title: transaction.category.title,
                             iconBgColor: Color(transaction.category.color),
                             amount: transaction.amount,
                             time: MHelperFunctions.formatTime(
-                                transaction.dateTime),
+                              transaction.dateTime,
+                            ),
                             type: transaction.type,
                             onTap: () {
                               MHelperFunctions.navigateToScreen(
@@ -146,11 +158,11 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  dynamic _calculateTotals(List<TransactionModel> transactions) {
+  Map<String, double> _calculateTotals(List<TransactionModel> transactions) {
     double income = 0;
     double expense = 0;
 
-    for (var transaction in transactions) {
+    for (final transaction in transactions) {
       if (transaction.type == TransactionType.income) {
         income += transaction.amount;
       } else {

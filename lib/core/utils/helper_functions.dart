@@ -144,4 +144,8 @@ class MHelperFunctions {
   static String formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }
+
+  static bool isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
 }

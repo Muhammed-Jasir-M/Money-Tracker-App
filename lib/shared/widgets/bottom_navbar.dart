@@ -18,20 +18,19 @@ class MBottomNavbar extends StatelessWidget {
     final isDark = MHelperFunctions.isDarkMode(context);
 
     return ClipRRect(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
       child: NavigationBar(
         height: 80,
-        indicatorColor: isDark ? MColors.primary : MColors.primary,
+        indicatorColor: MColors.primary,
         backgroundColor: isDark ? MColors.dark : MColors.bgLight,
         elevation: 3,
         selectedIndex: currentIndex,
         onDestinationSelected: onIndexChange,
         destinations: const [
           NavigationDestination(icon: Icon(CupertinoIcons.home), label: 'Home'),
-          NavigationDestination(
-            icon: Icon(CupertinoIcons.graph_square_fill),
-            label: 'Stats',
-          ),
+          NavigationDestination(icon: Icon(CupertinoIcons.list_bullet), label: 'Transactions'),
+          NavigationDestination(icon: Icon(CupertinoIcons.graph_square_fill), label: 'Stats'),
+          NavigationDestination(icon: Icon(CupertinoIcons.settings), label: 'Settings'),
         ],
       ),
     );

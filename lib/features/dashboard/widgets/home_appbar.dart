@@ -2,8 +2,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:money_tracker_app/core/constants/colors.dart';
 import 'package:money_tracker_app/shared/widgets/appbar.dart';
+
 class MHomeAppbar extends StatelessWidget {
-  const MHomeAppbar({super.key});
+  const MHomeAppbar({
+    super.key,
+    this.onOpenSettings,
+  });
+
+  final VoidCallback? onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -51,11 +57,9 @@ class MHomeAppbar extends StatelessWidget {
       ),
       actions: [
         IconButton(
-          onPressed: () {},
-          icon: Icon(
-            CupertinoIcons.settings,
-            size: 35,
-          ),
+          onPressed: onOpenSettings,
+          icon: Icon(CupertinoIcons.settings, size: 35),
+          tooltip: 'Settings',
         ),
       ],
     );
