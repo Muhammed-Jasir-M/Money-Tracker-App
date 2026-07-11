@@ -17,8 +17,7 @@ class ExpenseScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = MHelperFunctions.isDarkMode(context);
 
-    return Scaffold(
-      body: BlocConsumer<TransactionBloc, TransactionState>(
+    return BlocConsumer<TransactionBloc, TransactionState>(
         listener: (context, state) {
           if (state is TransactionError) {
             MHelperFunctions.showSnackBar(
@@ -60,6 +59,15 @@ class ExpenseScreen extends StatelessWidget {
                 .where((transaction) =>
                     transaction.type == TransactionType.expense)
                 .toList();
+
+            if (expenseTransactions.isEmpty) {
+              return const SizedBox(
+                height: 50,
+                child: Center(
+                  child: Text('No expense transactions available'),
+                ),
+              );
+            }
 
             return SingleChildScrollView(
               child: Column(
@@ -131,7 +139,6 @@ class ExpenseScreen extends StatelessWidget {
             );
           }
         },
-      ),
-    );
+      );
   }
 }

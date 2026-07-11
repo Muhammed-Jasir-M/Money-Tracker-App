@@ -7,19 +7,16 @@ class AddTransactionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Scaffold(
-        /// Appbar
-        appBar: MAppBar(
-          showBackArrow: true,
-          title: Text(
-            'Add Transaction',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+    return Scaffold(
+      appBar: MAppBar(
+        showBackArrow: true,
+        title: Text(
+          'Add Transaction',
+          style: Theme.of(context).textTheme.titleLarge,
         ),
-
-        /// Body
-        body: const MTransactionForm(isEditing: false),
+      ),
+      body: const SingleChildScrollView(
+        child: MTransactionForm(isEditing: false),
       ),
     );
   }

@@ -32,64 +32,54 @@ class _StatsScreenState extends State<StatsScreen>
   Widget build(BuildContext context) {
     final isDark = MHelperFunctions.isDarkMode(context);
 
-    return SingleChildScrollView(
-      child: Padding(
-        padding: EdgeInsets.all(MSizes.defaultSpace),
-        child: SizedBox(
-          height: MHelperFunctions.screenHeight(context),
-          child: Column(
-            children: [
-              const SizedBox(height: 5),
-              Container(
-                width: MHelperFunctions.screenWidth(context),
-                decoration: BoxDecoration(
+    return Padding(
+      padding: EdgeInsets.all(MSizes.defaultSpace),
+      child: Column(
+        children: [
+          const SizedBox(height: 5),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(5),
+              color: isDark ? MColors.dark : MColors.light,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(5),
+              child: TabBar(
+                controller: tabController,
+                indicatorColor:
+                    isDark ? MColors.primary : MColors.secondary,
+                labelColor: isDark ? MColors.secondary : MColors.primary,
+                unselectedLabelColor:
+                    isDark ? MColors.secondary : MColors.primary,
+                dividerHeight: 0,
+                indicatorWeight: 2,
+                indicator: BoxDecoration(
+                  color: isDark
+                      ? MColors.bgDark.withValues(alpha: 1.0)
+                      : MColors.bgLight.withValues(alpha: 1.0),
                   borderRadius: BorderRadius.circular(5),
-                  color: isDark ? MColors.dark : MColors.light,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(5),
-                  child: Column(
-                    children: [
-                      TabBar(
-                        controller: tabController,
-                        indicatorColor:
-                            isDark ? MColors.primary : MColors.secondary,
-                        labelColor:
-                            isDark ? MColors.secondary : MColors.primary,
-                        unselectedLabelColor:
-                            isDark ? MColors.secondary : MColors.primary,
-                        dividerHeight: 0,
-                        indicatorWeight: 2,
-                        indicator: BoxDecoration(
-                          color: isDark
-                              ? MColors.bgDark.withValues(alpha: 1.0)
-                              : MColors.bgLight.withValues(alpha: 1.0),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        indicatorPadding: EdgeInsets.all(5),
-                        tabs: [
-                          Tab(text: 'Income'),
-                          Tab(text: 'Expense'),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicatorPadding: EdgeInsets.all(5),
+                tabs: const [
+                  Tab(text: 'Income'),
+                  Tab(text: 'Expense'),
+                ],
               ),
-              const SizedBox(height: 10),
-              Expanded(
-                child: TabBarView(
-                  controller: tabController,
-                  children: [
-                    IncomeScreen(),
-                    ExpenseScreen(),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: TabBarView(
+              controller: tabController,
+              children: const [
+                IncomeScreen(),
+                ExpenseScreen(),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -17,13 +17,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final transactions =
-        (context.read<TransactionBloc>().state as TransactionLoaded)
-            .transactions;
-
-    final totals = _calculateTotals(transactions);
-
-    return BlocListener<TransactionBloc, TransactionState>(
+    return BlocConsumer<TransactionBloc, TransactionState>(
       listener: (context, state) {
         if (state is TransactionError) {
           MHelperFunctions.showSnackBar(
@@ -43,106 +37,102 @@ class HomeScreen extends StatelessWidget {
           );
         }
       },
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(MSizes.defaultSpace),
-          child: Column(
-            children: [
-              // Appbar
-              MHomeAppbar(),
-              const SizedBox(height: 20),
+      builder: (context, state) {
+        if (state is TransactionLoading || state is TransactionInitial) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-              // Gradient Balance Card
-              MGradientBalanceCard(
-                totalBalance: totals['balance'] ?? 0,
-                totalIncome: totals['income'] ?? 0,
-                totalExpense: totals['expense'] ?? 0,
-              ),
+        final transactions = switch (state) {
+          TransactionLoaded(:final transactions) => transactions,
+          TransactionSuccess(:final transactions) => transactions,
+          _ => <TransactionModel>[],
+        };
 
-              const SizedBox(height: 20),
+        final totals = _calculateTotals(transactions);
 
-              // Section Heading
-              MSectionHeading(
-                title: 'Transactions',
-                showActionbutton: true,
-                onPressed: () {
-                  MHelperFunctions.navigateToScreen(
-                    context,
-                    AllTransactionScreen(),
-                  );
-                },
-              ),
+        return SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.all(MSizes.defaultSpace),
+            child: Column(
+              children: [
+                // Appbar
+                MHomeAppbar(),
+                const SizedBox(height: 20),
 
-              const SizedBox(height: MSizes.sm),
+                // Gradient Balance Card
+                MGradientBalanceCard(
+                  totalBalance: totals['balance'] ?? 0,
+                  totalIncome: totals['income'] ?? 0,
+                  totalExpense: totals['expense'] ?? 0,
+                ),
 
-              // Transaction Tile
-              BlocBuilder<TransactionBloc, TransactionState>(
-                builder: (context, state) {
-                  if (state is TransactionLoading) {
-                    return Center(child: CircularProgressIndicator());
-                  } else if (state is TransactionLoaded ||
-                      state is TransactionSuccess) {
-                    final transactions = state is TransactionLoaded
-                        ? state.transactions
-                        : (state as TransactionSuccess).transactions;
+                const SizedBox(height: 20),
 
-                    if (transactions.isEmpty) {
-                      return const SizedBox(
-                        height: 50,
-                        child: Center(
-                          child: Text('No transactions availablel'),
-                        ),
+                // Section Heading
+                MSectionHeading(
+                  title: 'Transactions',
+                  showActionbutton: true,
+                  onPressed: () {
+                    MHelperFunctions.navigateToScreen(
+                      context,
+                      AllTransactionScreen(),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: MSizes.sm),
+
+                // Transaction Tile
+                if (transactions.isEmpty)
+                  const SizedBox(
+                    height: 50,
+                    child: Center(
+                      child: Text('No transactions availablel'),
+                    ),
+                  )
+                else
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: transactions.length,
+                    itemBuilder: (context, index) {
+                      final transaction = transactions[index];
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Text(
+                              MHelperFunctions.formatDateHeader(
+                                  transaction.date),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ),
+                          MTransactionTile(
+                            icon:
+                                categoryIcons[transaction.category.iconIndex],
+                            title: transaction.category.title,
+                            iconBgColor: Color(transaction.category.color),
+                            amount: transaction.amount,
+                            time: transaction.time.toString(),
+                            type: transaction.type,
+                          ),
+                        ],
                       );
-                    }
-
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: transactions.length,
-                      itemBuilder: (context, index) {
-                        final transaction = transactions[index];
-
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
-                              child: Text(
-                                MHelperFunctions.formatDateHeader(
-                                    transaction.date),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleSmall
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                              ),
-                            ),
-                            MTransactionTile(
-                              icon:
-                                  categoryIcons[transaction.category.iconIndex],
-                              title: transaction.category.title,
-                              iconBgColor: Color(transaction.category.color),
-                              amount: transaction.amount,
-                              time: transaction.time.toString(),
-                              type: transaction.type,
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  } else {
-                    return Center(
-                      child: Text('No Transactions Found'),
-                    );
-                  }
-                },
-              )
-            ],
+                    },
+                  ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

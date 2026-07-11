@@ -16,6 +16,16 @@ class MLineChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (transactions.isEmpty) {
+      return Center(
+        child: Text(
+          'No ${type == TransactionType.income ? 'income' : 'expense'} data to chart',
+          style: Theme.of(context).textTheme.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
     // Group transactions by date
     final dateMap = <DateTime, double>{};
     for (var transaction in transactions) {
@@ -41,14 +51,13 @@ class MLineChart extends StatelessWidget {
     return Column(
       children: [
         Text(
-          '${type == TransactionType.income ? 'Income' : 'Expense'} Over Time',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          'Over Time',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
         ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 200,
+        const SizedBox(height: 8),
+        Expanded(
           child: LineChart(
             LineChartData(
               lineTouchData: LineTouchData(
@@ -124,7 +133,7 @@ class MLineChart extends StatelessWidget {
               minX: 0,
               maxX: (sortedDates.length - 1).toDouble(),
               minY: 0,
-              maxY: dateMap.values.reduce((a, b) => a > b ? a : b) * 1.2,
+              maxY: dateMap.values.fold(0.0, (current, value) => value > current ? value : current) * 1.2,
               lineBarsData: [
                 LineChartBarData(
                   spots: spots,

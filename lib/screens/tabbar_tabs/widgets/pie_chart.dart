@@ -15,6 +15,16 @@ class MPieChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (transactions.isEmpty) {
+      return Center(
+        child: Text(
+          'No ${type == TransactionType.income ? 'income' : 'expense'} data to chart',
+          style: Theme.of(context).textTheme.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
     // Group transactions by category
     final categoryMap = <String, double>{};
     for (var transaction in transactions) {
@@ -50,14 +60,14 @@ class MPieChart extends StatelessWidget {
     return Column(
       children: [
         Text(
-          '${type == TransactionType.income ? 'Income' : 'Expense'} by Category',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          'By Category',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
         ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 200,
+        const SizedBox(height: 8),
+        Expanded(
+          flex: 3,
           child: PieChart(
             PieChartData(
               sections: sections,
@@ -71,34 +81,38 @@ class MPieChart extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        // Legend
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: categoryMap.entries.map((entry) {
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: Color(transactions
-                        .firstWhere((t) => t.category.title == entry.key)
-                        .category
-                        .color),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  entry.key,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            );
-          }).toList(),
+        Expanded(
+          flex: 1,
+          child: SingleChildScrollView(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              alignment: WrapAlignment.center,
+              children: categoryMap.entries.map((entry) {
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Color(transactions
+                            .firstWhere((t) => t.category.title == entry.key)
+                            .category
+                            .color),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      entry.key,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
         ),
       ],
     );

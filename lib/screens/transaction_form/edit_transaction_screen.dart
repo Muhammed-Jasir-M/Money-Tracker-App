@@ -7,19 +7,16 @@ class EditTransactionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Scaffold(
-        /// Appbar
-        appBar: MAppBar(
-          showBackArrow: true,
-          title: Text(
-            'Edit Transaction',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+    return Scaffold(
+      appBar: MAppBar(
+        showBackArrow: true,
+        title: Text(
+          'Edit Transaction',
+          style: Theme.of(context).textTheme.titleLarge,
         ),
-
-        /// Body
-        body: const MTransactionForm(isEditing: true),
+      ),
+      body: const SingleChildScrollView(
+        child: MTransactionForm(isEditing: true),
       ),
     );
   }
