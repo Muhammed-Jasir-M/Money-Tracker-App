@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:money_tracker_app/app.dart';
-import 'package:money_tracker_app/blocs/category/category_bloc.dart';
-import 'package:money_tracker_app/models/category/category_model.dart';
-import 'package:money_tracker_app/models/enum/enum.dart';
-import 'package:money_tracker_app/models/transaction/transaction_model.dart';
-import 'package:money_tracker_app/blocs/transaction/transaction_bloc.dart';
-import 'package:money_tracker_app/simple_bloc_observer.dart';
+import 'package:money_tracker_app/core/bloc/simple_bloc_observer.dart';
+import 'package:money_tracker_app/data/models/category/category_model.dart';
+import 'package:money_tracker_app/data/models/enum/enum.dart';
+import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
+import 'package:money_tracker_app/features/categories/bloc/category_bloc.dart';
+import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
 
 Future<void> main() async {
   // Add Widgets Binding
