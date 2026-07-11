@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:intl/intl.dart';
+import 'package:money_tracker_app/core/constants/app_branding.dart';
 import 'package:money_tracker_app/core/storage/receipt_storage.dart';
 import 'package:money_tracker_app/data/models/budget/budget_model.dart';
 import 'package:money_tracker_app/data/models/category/category_model.dart';
@@ -56,8 +57,8 @@ class BackupService {
 
     await Share.shareXFiles(
       [XFile(file.path)],
-      subject: 'Money Tracker backup',
-      text: 'Money Tracker data backup',
+      subject: '${AppBranding.displayName} backup',
+      text: '${AppBranding.displayName} data backup',
     );
   }
 

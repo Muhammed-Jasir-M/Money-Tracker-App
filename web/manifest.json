@@ -1,11 +1,11 @@
 {
-    "name": "money_tracker_app",
-    "short_name": "money_tracker_app",
+    "name": "Finora",
+    "short_name": "Finora",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#00B2E7",
+    "theme_color": "#00B2E7",
+    "description": "Track income, expenses, budgets, and stats offline on your device.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

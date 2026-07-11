@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:money_tracker_app/core/constants/app_branding.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -76,7 +77,7 @@ class LockService {
   Future<bool> authenticateWithBiometrics({String? reason}) async {
     try {
       return await _localAuth.authenticate(
-        localizedReason: reason ?? 'Unlock Money Tracker',
+        localizedReason: reason ?? 'Unlock ${AppBranding.displayName}',
         options: const AuthenticationOptions(
           stickyAuth: true,
           biometricOnly: true,

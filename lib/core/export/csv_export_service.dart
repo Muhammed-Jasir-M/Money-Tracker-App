@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:csv/csv.dart';
+import 'package:money_tracker_app/core/constants/app_branding.dart';
 import 'package:intl/intl.dart';
 import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
 import 'package:money_tracker_app/data/repositories/transaction_repository.dart';
@@ -53,7 +54,7 @@ class CsvExportService {
 
     await Share.shareXFiles(
       [XFile(file.path, mimeType: 'text/csv')],
-      subject: 'Money Tracker transactions',
+      subject: '${AppBranding.displayName} transactions',
       text: 'Transaction export (${transactions.length} rows)',
     );
   }

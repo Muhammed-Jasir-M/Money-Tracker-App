@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:money_tracker_app/core/constants/app_branding.dart';
 import 'package:money_tracker_app/core/constants/colors.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
 import 'package:money_tracker_app/core/security/lock_service.dart';
@@ -331,7 +332,7 @@ class _PinEntrySheetState extends State<PinEntrySheet> {
       };
 
   String get _subtitle => switch (_effectiveMode) {
-        PinEntryMode.unlock => 'Unlock Money Tracker',
+        PinEntryMode.unlock => 'Unlock ${AppBranding.displayName}',
         PinEntryMode.setup => 'Choose a ${LockService.pinLength}-digit PIN',
         PinEntryMode.confirm => 'Re-enter your PIN',
         PinEntryMode.verifyCurrent => 'Verify before changing your PIN',

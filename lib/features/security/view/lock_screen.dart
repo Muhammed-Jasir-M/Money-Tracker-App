@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:money_tracker_app/core/constants/app_branding.dart';
 import 'package:money_tracker_app/core/constants/colors.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
 import 'package:money_tracker_app/core/security/lock_service.dart';
@@ -164,7 +165,7 @@ class _LockScreenState extends State<LockScreen> {
               ),
               const SizedBox(height: MSizes.lg),
               Text(
-                'Money Tracker',
+                AppBranding.displayName,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),

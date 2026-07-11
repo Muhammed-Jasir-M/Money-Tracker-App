@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:money_tracker_app/core/constants/app_branding.dart';
 import 'package:money_tracker_app/core/currency/currency_scope.dart';
 import 'package:money_tracker_app/core/security/lock_gate.dart';
 import 'package:money_tracker_app/core/theme/theme.dart';
@@ -19,7 +20,7 @@ class MyApp extends StatelessWidget {
 
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          title: 'Money Manager App',
+          title: AppBranding.displayName,
           themeMode: themeMode,
           theme: MAppTheme.lightTheme,
           darkTheme: MAppTheme.darkTheme,
