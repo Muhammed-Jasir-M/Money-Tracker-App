@@ -1,63 +1,114 @@
-# Money Tracker App
+# Finora
 
-A Flutter application designed to help users manage their finances effectively by tracking income, expenses.
+Offline-first personal finance app built with Flutter. Track income and expenses, set budgets, view charts, and keep everything on your device — no account, no cloud.
 
-## Getting Started
+| | |
+|---|---|
+| **App name** | Finora |
+| **Package ID** | `com.finora.app` |
+| **Version** | 1.0.0 |
+| **Platforms** | Android · iOS · Web (partial) |
 
-This project serves as a starting point for building a Flutter application focused on personal finance management.
+## About
 
-### Features
+Finora helps you manage day-to-day money: log transactions with categories and notes, attach receipt photos, set monthly budgets, and review spending trends. All data is stored locally using Hive. Optional PIN and biometric lock protect the app on your device.
 
-- **Expense Tracking**:
+## Features
 
-  - Record daily expenses with ease.
-  - Categorize expenses for better insights.
-  - View expense history and trends.
+- **Dashboard** — Balance, income vs expense, recent transactions
+- **Transactions** — Add, edit, delete, filter, search, swipe-to-delete
+- **Stats** — Category donut chart and daily/monthly trend line chart
+- **Budgets** — Total or per-category monthly limits with progress
+- **Categories** — Custom income/expense categories (icons & colors)
+- **Settings** — Theme, currency, profile name, app lock, biometrics
+- **Backup & export** — JSON backup/restore, CSV export for spreadsheets
+- **Offline & private** — No login, no analytics, no cloud sync
 
-- **Income Management**:
-  - Log income sources and amounts.
-  - Track monthly income and savings.
+## Tech stack
+
+| Layer | Tools |
+|-------|--------|
+| **Framework** | Flutter, Dart 3.6+ |
+| **State management** | `flutter_bloc`, `equatable` |
+| **Local database** | Hive, `hive_flutter` |
+| **Charts** | `fl_chart` |
+| **Security** | `local_auth`, `flutter_secure_storage`, `crypto` |
+| **Media & files** | `image_picker`, `file_picker`, `path_provider` |
+| **Export / share** | `share_plus`, `csv` |
+| **UI** | Material 3, `google_fonts`, `font_awesome_flutter` |
+
+## Architecture
+
+```
+lib/
+├── core/           # Theme, backup, CSV export, app lock, Hive helpers
+├── data/           # Models, datasources, repositories
+├── features/       # Feature modules (dashboard, transactions, stats, …)
+└── shared/         # Reusable widgets (app bar, tiles, dialogs, …)
+```
+
+Each feature follows **BLoC → Repository → Datasource** with Hive as the single source of truth on device.
+
+## Getting started
 
 ### Prerequisites
 
-Before you begin, ensure you have the following installed:
+1. Install [Flutter SDK](https://docs.flutter.dev/get-started/install) (3.6 or newer)
+2. Install [Git](https://git-scm.com/)
+3. Use **VS Code** or **Android Studio** with Flutter/Dart plugins
+4. Connect a device or start an emulator, then verify:
 
-- [Flutter SDK](https://flutter.dev/docs/get-started/install)
-- [Dart SDK](https://dart.dev/get-dart)
-- A code editor such as [Visual Studio Code](https://code.visualstudio.com/) or [Android Studio](https://developer.android.com/studio)
-- A device or emulator for testing the application.
+```bash
+flutter doctor
+```
 
-### Installation
+### Clone & run
 
-Follow these steps to clone and run the project:
+```bash
+git clone https://github.com/Muhammed-Jasir-M/Money-Tracker-App.git
+cd Money-Tracker-App
+flutter pub get
+flutter run
+```
 
-1. Clone the repository:
+When prompted, pick your device (Android phone, emulator, Chrome, etc.).
 
-   ```bash
-   git clone https://github.com/Muhammed-Jasir-M/Money-Tracker-App.git
-   ```
+### Release build (optional)
 
-   ```bash
-   cd Money-Tracker-App
-   ```
+```bash
+flutter build apk --release
+```
 
-2. Install dependencies:
+APK output: `build/app/outputs/flutter-apk/app-release.apk`
 
-   ```bash
-   flutter pub get
-   ```
+> **Note:** Package ID is `com.finora.app`. Uninstall older builds (`com.example.*` or `com.moneytracker.app`) before installing a new package ID.
 
-3. Run the application:
+## Developer notes
 
-   ```bash
-   flutter run
-   ```
+**Regenerate app icon** — replace `assets/icon/app_icon.png` (1024×1024), then:
 
-### Resources
+```bash
+dart run flutter_launcher_icons
+```
 
-A few resources to help you get started with Flutter development:
+**Regenerate Hive adapters** — after changing `@HiveType` models:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
 
-For additional help, refer to the [Flutter online documentation](https://docs.flutter.dev/), which includes tutorials, samples, and a full API reference.
+**After adding native plugins** (e.g. biometrics) — use a full rebuild, not hot restart:
+
+```bash
+flutter run
+```
+
+Branding constants: `lib/core/constants/app_branding.dart`
+
+## License
+
+Personal and portfolio use. Add a `LICENSE` file (e.g. MIT) if you publish the repo publicly.
+
+## Author
+
+**Muhammed Jasir** — [GitHub](https://github.com/Muhammed-Jasir-M)

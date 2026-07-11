@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:money_tracker_app/core/constants/app_branding.dart';
 import 'package:money_tracker_app/core/backup/backup_service.dart';
 import 'package:money_tracker_app/core/constants/currencies.dart';
 import 'package:money_tracker_app/core/export/csv_export_service.dart';
@@ -873,7 +874,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _SettingsTile(
                     icon: Icons.info_outline,
                     title: 'Version',
-                    subtitle: '1.0.0',
+                    subtitle: '${AppBranding.version} · ${AppBranding.applicationId}',
                   ),
                 ],
               ),
