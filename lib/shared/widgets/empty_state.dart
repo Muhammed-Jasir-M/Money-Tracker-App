@@ -24,7 +24,8 @@ class MEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isTight = constraints.maxHeight < 180;
+        final hasBoundedHeight = constraints.hasBoundedHeight;
+        final isTight = hasBoundedHeight && constraints.maxHeight < 180;
         final useCompact = compact || isTight;
         final iconBox = useCompact ? 52.0 : 72.0;
         final iconSize = useCompact ? 26.0 : 36.0;
@@ -88,6 +89,16 @@ class MEmptyState extends StatelessWidget {
             ],
           ],
         );
+
+        if (!hasBoundedHeight) {
+          return Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: padding,
+              vertical: padding,
+            ),
+            child: Center(child: content),
+          );
+        }
 
         return SingleChildScrollView(
           padding: EdgeInsets.all(padding),
