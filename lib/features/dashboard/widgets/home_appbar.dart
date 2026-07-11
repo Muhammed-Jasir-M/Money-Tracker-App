@@ -7,12 +7,7 @@ import 'package:money_tracker_app/core/utils/helper_functions.dart';
 import 'package:money_tracker_app/features/settings/bloc/settings_bloc.dart';
 
 class MHomeAppbar extends StatelessWidget {
-  const MHomeAppbar({
-    super.key,
-    this.onOpenCategories,
-  });
-
-  final VoidCallback? onOpenCategories;
+  const MHomeAppbar({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -84,15 +79,6 @@ class MHomeAppbar extends StatelessWidget {
                           ),
                     ),
                   ],
-                ),
-              ),
-              IconButton(
-                onPressed: onOpenCategories,
-                tooltip: 'Categories',
-                icon: Icon(
-                  CupertinoIcons.square_grid_2x2,
-                  size: 26,
-                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ],

@@ -15,7 +15,9 @@ import 'package:money_tracker_app/features/transactions/utils/transaction_filter
 import 'package:money_tracker_app/features/transactions/view/transaction_detail_screen.dart';
 import 'package:money_tracker_app/features/transactions/view/widgets/category_picker_sheet.dart';
 import 'package:money_tracker_app/shared/widgets/appbar.dart';
+import 'package:money_tracker_app/shared/widgets/confirm_dialog.dart';
 import 'package:money_tracker_app/shared/widgets/empty_state.dart';
+import 'package:money_tracker_app/shared/widgets/period_filter_section.dart';
 import 'package:money_tracker_app/shared/widgets/text_form_field.dart';
 import 'package:money_tracker_app/shared/widgets/transaction_tile.dart';
 
@@ -35,7 +37,6 @@ class TransactionsScreen extends StatefulWidget {
 
 class _TransactionsScreenState extends State<TransactionsScreen> {
   TransactionFilters _filters = const TransactionFilters();
-  bool _filtersExpanded = false;
   late final TextEditingController _searchController;
   late final FocusNode _searchFocusNode;
 
@@ -44,7 +45,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     super.initState();
     _searchController = TextEditingController();
     _searchFocusNode = FocusNode();
-    _searchFocusNode.addListener(_onSearchFocusChange);
     _applyNavigationRequest(fromInit: true);
   }
 
@@ -58,16 +58,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   @override
   void dispose() {
-    _searchFocusNode.removeListener(_onSearchFocusChange);
     _searchFocusNode.dispose();
     _searchController.dispose();
     super.dispose();
-  }
-
-  void _onSearchFocusChange() {
-    if (_searchFocusNode.hasFocus && _filtersExpanded) {
-      setState(() => _filtersExpanded = false);
-    }
   }
 
   void _applyNavigationRequest({bool fromInit = false}) {
@@ -78,7 +71,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
     void apply() {
       _filters = request.filters;
-      _filtersExpanded = request.expandFilters;
       _searchController.text = request.filters.searchQuery;
     }
 
@@ -86,6 +78,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       apply();
     } else {
       setState(apply);
+    }
+
+    if (request.expandFilters) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _openFiltersSortSheet();
+        }
+      });
     }
 
     final onHandled = widget.onNavigationRequestHandled;
@@ -100,12 +100,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   void _updateFilters(TransactionFilters filters) {
     setState(() => _filters = filters);
-  }
-
-  void _collapseFilters() {
-    if (_filtersExpanded) {
-      setState(() => _filtersExpanded = false);
-    }
   }
 
   void _applyTypeFilter(TransactionType? type) {
@@ -123,23 +117,85 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     _updateFilters(next);
   }
 
-  void _toggleFilters() {
+  void _openFiltersSortSheet() {
     FocusManager.instance.primaryFocus?.unfocus();
-    setState(() => _filtersExpanded = !_filtersExpanded);
+
+    final categoryController = TextEditingController(
+      text: _filters.category?.title ?? '',
+    );
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            void syncCategoryField() {
+              categoryController.text = _filters.category?.title ?? '';
+            }
+
+            void onFiltersChanged(TransactionFilters filters) {
+              _updateFilters(filters);
+              syncCategoryField();
+              setSheetState(() {});
+            }
+
+            Future<void> onClearFilters() async {
+              await _confirmClearFilters();
+              if (context.mounted) {
+                syncCategoryField();
+                setSheetState(() {});
+              }
+            }
+
+            return _TransactionFiltersSortSheet(
+              filters: _filters,
+              categoryController: categoryController,
+              onChanged: onFiltersChanged,
+              onTypeChanged: (type) {
+                _applyTypeFilter(type);
+                syncCategoryField();
+                setSheetState(() {});
+              },
+              onClear: _filters.hasActiveFilters ? onClearFilters : null,
+            );
+          },
+        );
+      },
+    ).whenComplete(categoryController.dispose);
+  }
+
+  bool get _hasCustomSort =>
+      _filters.sortOrder != TransactionSortOrder.newestFirst;
+
+  bool get _hasActiveFiltersOrSort =>
+      _filters.hasActiveFilters || _hasCustomSort;
+
+  Future<void> _confirmClearFilters() async {
+    if (!_filters.hasActiveFilters) return;
+
+    final confirmed = await MConfirmDialog.show(
+      context: context,
+      title: 'Clear all filters?',
+      message: 'This will reset search, type, period, and category.',
+      confirmLabel: 'Clear',
+      icon: Icons.filter_alt_off_outlined,
+    );
+    if (!confirmed || !mounted) return;
+
+    _searchController.clear();
+    _updateFilters(
+      TransactionFilters(sortOrder: _filters.sortOrder),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MAppBar(
-        centerTitle: false,
-        titleSpacing: MSizes.defaultSpace,
-        title: Text(
-          'Transactions',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
+      appBar: tabScreenAppBar(
+        context,
+        title: 'Transactions',
         actions: [
           IconButton(
             onPressed: () {
@@ -152,17 +208,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             icon: const Icon(Icons.category_outlined),
           ),
           IconButton(
-            onPressed: _toggleFilters,
-            tooltip: 'Filters',
+            onPressed: _openFiltersSortSheet,
+            tooltip: 'Filter & sort',
             icon: Badge(
-              isLabelVisible: _filters.hasActiveFilters,
+              isLabelVisible: _hasActiveFiltersOrSort,
               smallSize: 8,
-              child: Icon(
-                _filtersExpanded ? Icons.filter_list_off : Icons.filter_list,
-              ),
+              child: const Icon(Icons.tune),
             ),
           ),
-          const SizedBox(width: MSizes.sm),
         ],
       ),
       body: BlocConsumer<TransactionBloc, TransactionState>(
@@ -221,45 +274,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     _updateFilters(_filters.copyWith(searchQuery: value)),
               ),
             ),
-            if (_filtersExpanded) ...[
-              const SizedBox(height: MSizes.sm),
-              _TransactionFiltersPanel(
-                filters: _filters,
-                onChanged: _updateFilters,
-                onTypeChanged: _applyTypeFilter,
-              ),
-              if (_filters.hasActiveFilters)
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: MSizes.defaultSpace,
-                    vertical: MSizes.xs,
-                  ),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        _searchController.clear();
-                        _updateFilters(const TransactionFilters());
-                      },
-                      child: const Text('Clear filters'),
-                    ),
-                  ),
-                ),
-            ],
             Expanded(
-              child: GestureDetector(
-                onTap: _collapseFilters,
-                behavior: HitTestBehavior.translucent,
-                child: NotificationListener<ScrollNotification>(
-                  onNotification: (notification) {
-                    if (notification is ScrollStartNotification &&
-                        _filtersExpanded) {
-                      _collapseFilters();
-                    }
-                    return false;
-                  },
-                  child: filtered.isEmpty
+              child: filtered.isEmpty
                   ? MEmptyState(
+                      compact: true,
                       icon: transactions.isEmpty
                           ? Icons.receipt_long_outlined
                           : Icons.search_off_outlined,
@@ -327,8 +345,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         );
                       },
                     ),
-              ),
-                ),
             ),
           ],
         );
@@ -338,32 +354,25 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 }
 
-class _TransactionFiltersPanel extends StatelessWidget {
-  const _TransactionFiltersPanel({
+class _TransactionFiltersSortSheet extends StatelessWidget {
+  const _TransactionFiltersSortSheet({
     required this.filters,
+    required this.categoryController,
     required this.onChanged,
     required this.onTypeChanged,
+    this.onClear,
   });
 
   final TransactionFilters filters;
+  final TextEditingController categoryController;
   final ValueChanged<TransactionFilters> onChanged;
   final ValueChanged<TransactionType?> onTypeChanged;
+  final Future<void> Function()? onClear;
 
   Future<void> _openCategoryFilter(BuildContext context) async {
     final bloc = context.read<CategoryBloc>();
-    var state = bloc.state;
-
-    if (state is! CategoryLoaded) {
-      bloc.add(LoadCategories());
-      await bloc.stream.firstWhere(
-        (s) => s is CategoryLoaded || s is CategoryError,
-      );
-      if (!context.mounted) return;
-      state = bloc.state;
-    }
-
-    final categories =
-        state is CategoryLoaded ? state.categories : <CategoryModel>[];
+    final categories = await ensureCategoriesLoaded(bloc);
+    if (!context.mounted) return;
 
     final result = await showCategoryPickerSheet(
       context: context,
@@ -388,120 +397,103 @@ class _TransactionFiltersPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = MHelperFunctions.isDarkMode(context);
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.85;
+    final sectionTitleStyle = Theme.of(context).textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+          fontSize: MSizes.formLabelSize,
+        );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: MSizes.defaultSpace),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(MSizes.md),
-        decoration: BoxDecoration(
-          color: isDark ? MColors.dark : MColors.light,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Type',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: MSizes.formLabelSize,
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+            MSizes.defaultSpace,
+            MSizes.sm,
+            MSizes.defaultSpace,
+            MSizes.xl,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Filter & sort',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: MSizes.lg),
+              Text('Type', style: sectionTitleStyle),
+              const SizedBox(height: MSizes.sm),
+              Row(
+                children: [
+                  Expanded(
+                    child: _FilterOptionChip(
+                      label: 'All',
+                      selected: filters.type == null,
+                      onTap: () => onTypeChanged(null),
+                    ),
                   ),
-            ),
-            const SizedBox(height: MSizes.sm),
-            Row(
-              children: [
-                Expanded(
-                  child: _FilterOptionChip(
-                    label: 'All',
-                    selected: filters.type == null,
-                    onTap: () => onTypeChanged(null),
+                  const SizedBox(width: MSizes.sm),
+                  Expanded(
+                    child: _FilterOptionChip(
+                      label: 'Income',
+                      selected: filters.type == TransactionType.income,
+                      selectedColor: Colors.green,
+                      onTap: () => onTypeChanged(TransactionType.income),
+                    ),
                   ),
-                ),
-                const SizedBox(width: MSizes.sm),
-                Expanded(
-                  child: _FilterOptionChip(
-                    label: 'Income',
-                    selected: filters.type == TransactionType.income,
-                    selectedColor: Colors.green,
-                    onTap: () => onTypeChanged(TransactionType.income),
+                  const SizedBox(width: MSizes.sm),
+                  Expanded(
+                    child: _FilterOptionChip(
+                      label: 'Expense',
+                      selected: filters.type == TransactionType.expense,
+                      selectedColor: Colors.red,
+                      onTap: () => onTypeChanged(TransactionType.expense),
+                    ),
                   ),
-                ),
-                const SizedBox(width: MSizes.sm),
-                Expanded(
-                  child: _FilterOptionChip(
-                    label: 'Expense',
-                    selected: filters.type == TransactionType.expense,
-                    selectedColor: Colors.red,
-                    onTap: () => onTypeChanged(TransactionType.expense),
+                ],
+              ),
+              const SizedBox(height: MSizes.md),
+              Text('Period', style: sectionTitleStyle),
+              const SizedBox(height: MSizes.sm),
+              PeriodFilterSection(
+                filters: filters,
+                onChanged: onChanged,
+              ),
+              const SizedBox(height: MSizes.md),
+              MTextFormField(
+                controller: categoryController,
+                label: 'Category',
+                hintText: 'All categories',
+                prefixIcon: filters.category != null
+                    ? categoryIcons[filters.category!.iconIndex]
+                    : Icons.category_outlined,
+                readOnly: true,
+                suffixIcon: Icons.chevron_right,
+                onTap: () => _openCategoryFilter(context),
+              ),
+              if (onClear != null) ...[
+                const SizedBox(height: MSizes.md),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: onClear,
+                    child: const Text('Clear filters'),
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: MSizes.md),
-            Text(
-              'Period',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: MSizes.formLabelSize,
-                  ),
-            ),
-            const SizedBox(height: MSizes.sm),
-            Row(
-              children: [
-                Expanded(
-                  child: _FilterOptionChip(
-                    label: 'All time',
-                    selected:
-                        filters.dateFilter == TransactionDateFilter.all,
-                    onTap: () => onChanged(
-                      filters.copyWith(
-                        dateFilter: TransactionDateFilter.all,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: MSizes.sm),
-                Expanded(
-                  child: _FilterOptionChip(
-                    label: 'This week',
-                    selected: filters.dateFilter ==
-                        TransactionDateFilter.thisWeek,
-                    onTap: () => onChanged(
-                      filters.copyWith(
-                        dateFilter: TransactionDateFilter.thisWeek,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: MSizes.sm),
-                Expanded(
-                  child: _FilterOptionChip(
-                    label: 'This month',
-                    selected: filters.dateFilter ==
-                        TransactionDateFilter.thisMonth,
-                    onTap: () => onChanged(
-                      filters.copyWith(
-                        dateFilter: TransactionDateFilter.thisMonth,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: MSizes.md),
-            MTextFormField(
-              label: 'Category',
-              hintText: filters.category?.title ?? 'All categories',
-              prefixIcon: filters.category != null
-                  ? categoryIcons[filters.category!.iconIndex]
-                  : Icons.category_outlined,
-              readOnly: true,
-              suffixIcon: Icons.chevron_right,
-              onTap: () => _openCategoryFilter(context),
-            ),
-          ],
+              const SizedBox(height: MSizes.lg),
+              Text('Sort by', style: sectionTitleStyle),
+              const SizedBox(height: MSizes.sm),
+              SortOrderSection(
+                sortOrder: filters.sortOrder,
+                onChanged: (order) =>
+                    onChanged(filters.copyWith(sortOrder: order)),
+              ),
+              const SizedBox(height: MSizes.lg),
+            ],
+          ),
         ),
       ),
     );

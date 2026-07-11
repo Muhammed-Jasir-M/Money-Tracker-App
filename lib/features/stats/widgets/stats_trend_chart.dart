@@ -7,40 +7,48 @@ import 'package:money_tracker_app/core/utils/helper_functions.dart';
 import 'package:money_tracker_app/core/utils/money_format.dart';
 import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
 import 'package:money_tracker_app/features/stats/utils/stats_helpers.dart';
+import 'package:money_tracker_app/features/transactions/utils/date_filter_pickers.dart';
 import 'package:money_tracker_app/features/transactions/utils/transaction_filters.dart';
 
 class StatsTrendChart extends StatelessWidget {
   const StatsTrendChart({
     super.key,
     required this.transactions,
-    required this.period,
+    required this.periodFilters,
   });
 
   final List<TransactionModel> transactions;
-  final TransactionDateFilter period;
+  final TransactionFilters periodFilters;
 
   static const _chartHeight = 280.0;
 
-  String get _title => switch (period) {
+  String get _title => switch (periodFilters.dateFilter) {
         TransactionDateFilter.all => 'Monthly trend',
         TransactionDateFilter.thisMonth => 'Daily trend this month',
         TransactionDateFilter.thisWeek => 'Daily trend this week',
+        TransactionDateFilter.customMonth =>
+          'Daily trend ${periodFilters.customMonth != null ? DateFilterPickers.monthLabel(periodFilters.customMonth!) : ''}',
+        TransactionDateFilter.customRange => 'Trend for selected range',
       };
 
-  String get _emptyMessage => switch (period) {
+  String get _emptyMessage => switch (periodFilters.dateFilter) {
         TransactionDateFilter.all =>
           'Add transactions across multiple months to see trend',
         TransactionDateFilter.thisMonth =>
           'Add transactions this month to see daily trend',
         TransactionDateFilter.thisWeek =>
           'Add transactions this week to see daily trend',
+        TransactionDateFilter.customMonth =>
+          'Add transactions in this month to see trend',
+        TransactionDateFilter.customRange =>
+          'Add transactions in this range to see trend',
       };
 
   @override
   Widget build(BuildContext context) {
     final isDark = MHelperFunctions.isDarkMode(context);
     final symbol = CurrencyScope.of(context);
-    final points = StatsHelpers.groupTrend(transactions, period);
+    final points = StatsHelpers.groupTrend(transactions, periodFilters);
 
     return Container(
       width: double.infinity,

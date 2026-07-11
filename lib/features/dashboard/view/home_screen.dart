@@ -3,12 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:money_tracker_app/core/constants/category_icons.dart';
 import 'package:money_tracker_app/core/constants/sizes.dart';
 import 'package:money_tracker_app/core/utils/helper_functions.dart';
-import 'package:money_tracker_app/data/models/enum/enum.dart';
 import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
 import 'package:money_tracker_app/features/dashboard/widgets/gradient_card.dart';
 import 'package:money_tracker_app/features/dashboard/widgets/home_appbar.dart';
 import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
 import 'package:money_tracker_app/features/transactions/view/transaction_detail_screen.dart';
+import 'package:money_tracker_app/shared/widgets/appbar.dart';
 import 'package:money_tracker_app/shared/widgets/empty_state.dart';
 import 'package:money_tracker_app/shared/widgets/section_heading.dart';
 import 'package:money_tracker_app/shared/widgets/transaction_tile.dart';
@@ -27,7 +27,21 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<TransactionBloc, TransactionState>(
+    return Scaffold(
+      appBar: tabScreenAppBar(
+        context,
+        title: 'Home',
+        actions: onOpenCategories == null
+            ? null
+            : [
+                IconButton(
+                  onPressed: onOpenCategories,
+                  tooltip: 'Manage categories',
+                  icon: const Icon(Icons.category_outlined),
+                ),
+              ],
+      ),
+      body: BlocConsumer<TransactionBloc, TransactionState>(
       listener: (context, state) {
         if (state is TransactionError) {
           MHelperFunctions.showSnackBar(
@@ -61,23 +75,22 @@ class HomeScreen extends StatelessWidget {
         final sorted = List<TransactionModel>.from(transactions)
           ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
         final recent = sorted.take(_recentLimit).toList();
-        final totals = _calculateTotals(transactions);
 
         return SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.all(MSizes.defaultSpace),
+            padding: const EdgeInsets.fromLTRB(
+              MSizes.defaultSpace,
+              MSizes.sm,
+              MSizes.defaultSpace,
+              MSizes.defaultSpace,
+            ),
             child: Column(
               children: [
-                /// Home Appbar
-                MHomeAppbar(onOpenCategories: onOpenCategories),
+                const MHomeAppbar(),
                 const SizedBox(height: 20),
 
                 /// Balance Card
-                MGradientBalanceCard(
-                  totalBalance: totals['balance'] ?? 0,
-                  totalIncome: totals['income'] ?? 0,
-                  totalExpense: totals['expense'] ?? 0,
-                ),
+                MGradientBalanceCard(transactions: transactions),
                 const SizedBox(height: 20),
 
                 /// Recent Transactions Heading
@@ -159,25 +172,7 @@ class HomeScreen extends StatelessWidget {
           ),
         );
       },
+    ),
     );
-  }
-
-  Map<String, double> _calculateTotals(List<TransactionModel> transactions) {
-    double income = 0;
-    double expense = 0;
-
-    for (final transaction in transactions) {
-      if (transaction.type == TransactionType.income) {
-        income += transaction.amount;
-      } else {
-        expense += transaction.amount;
-      }
-    }
-
-    return {
-      'income': income,
-      'expense': expense,
-      'balance': income - expense,
-    };
   }
 }

@@ -36,9 +36,9 @@ class StatsHelpers {
 
   static List<TransactionModel> filterByPeriod(
     List<TransactionModel> transactions,
-    TransactionDateFilter period,
+    TransactionFilters periodFilters,
   ) {
-    return TransactionFilters(dateFilter: period).apply(transactions);
+    return periodFilters.periodOnly().applyDateOnly(transactions);
   }
 
   static double sumAmount(List<TransactionModel> transactions) {
@@ -86,13 +86,35 @@ class StatsHelpers {
 
   static List<TrendPoint> groupTrend(
     List<TransactionModel> transactions,
-    TransactionDateFilter period,
+    TransactionFilters periodFilters,
   ) {
-    return switch (period) {
+    return switch (periodFilters.dateFilter) {
       TransactionDateFilter.all => _groupByMonth(transactions),
       TransactionDateFilter.thisMonth => _groupByDay(transactions),
       TransactionDateFilter.thisWeek => _groupByDay(transactions),
+      TransactionDateFilter.customMonth => _groupByDay(transactions),
+      TransactionDateFilter.customRange =>
+        _groupByDayOrMonth(transactions, periodFilters),
     };
+  }
+
+  static List<TrendPoint> _groupByDayOrMonth(
+    List<TransactionModel> transactions,
+    TransactionFilters periodFilters,
+  ) {
+    final start = periodFilters.rangeStart;
+    final end = periodFilters.rangeEnd;
+    if (start == null || end == null) {
+      return _groupByDay(transactions);
+    }
+
+    final startDay = DateTime(start.year, start.month, start.day);
+    final endDay = DateTime(end.year, end.month, end.day);
+    final daySpan = endDay.difference(startDay).inDays;
+    if (daySpan > 60) {
+      return _groupByMonth(transactions);
+    }
+    return _groupByDay(transactions);
   }
 
   static List<TrendPoint> groupByMonth(List<TransactionModel> transactions) {

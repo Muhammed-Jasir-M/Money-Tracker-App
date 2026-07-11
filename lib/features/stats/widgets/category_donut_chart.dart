@@ -10,13 +10,11 @@ class CategoryDonutChart extends StatelessWidget {
     required this.items,
     required this.total,
     required this.accentColor,
-    this.onSliceTap,
   });
 
   final List<CategoryBreakdownItem> items;
   final double total;
   final Color accentColor;
-  final ValueChanged<CategoryBreakdownItem>? onSliceTap;
 
   static const _chartHeight = 196.0;
   static const _sectionRadius = 72.0;
@@ -56,24 +54,6 @@ class CategoryDonutChart extends StatelessWidget {
                     centerSpaceRadius: _centerSpaceRadius,
                     sectionsSpace: 2,
                     startDegreeOffset: -90,
-                    pieTouchData: PieTouchData(
-                      enabled: onSliceTap != null,
-                      touchCallback: (event, response) {
-                        if (!event.isInterestedForInteractions ||
-                            response == null ||
-                            onSliceTap == null) {
-                          return;
-                        }
-                        final index =
-                            response.touchedSection?.touchedSectionIndex;
-                        if (index == null ||
-                            index < 0 ||
-                            index >= items.length) {
-                          return;
-                        }
-                        onSliceTap!(items[index]);
-                      },
-                    ),
                   ),
                   duration: const Duration(milliseconds: 900),
                   curve: Curves.easeOutCubic,

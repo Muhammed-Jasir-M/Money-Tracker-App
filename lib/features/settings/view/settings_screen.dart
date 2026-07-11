@@ -9,6 +9,7 @@ import 'package:money_tracker_app/features/categories/bloc/category_bloc.dart';
 import 'package:money_tracker_app/features/settings/bloc/settings_bloc.dart';
 import 'package:money_tracker_app/features/settings/view/manage_categories_screen.dart';
 import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
+import 'package:money_tracker_app/shared/widgets/appbar.dart';
 import 'package:money_tracker_app/shared/widgets/confirm_dialog.dart';
 import 'package:money_tracker_app/shared/widgets/text_form_field.dart';
 
@@ -54,6 +55,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       title: 'Clear all transactions?',
       message: 'This will permanently delete every transaction.',
       confirmLabel: 'Clear',
+      isDestructive: true,
       icon: Icons.receipt_long_outlined,
     );
     if (!confirmed || !mounted) return;
@@ -78,6 +80,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       message:
           'This will permanently delete every category. Existing transactions will keep their category labels.',
       confirmLabel: 'Clear',
+      isDestructive: true,
       icon: Icons.folder_off_outlined,
     );
     if (!confirmed || !mounted) return;
@@ -237,7 +240,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<SettingsBloc, SettingsState>(
+    return Scaffold(
+      appBar: tabScreenAppBar(context, title: 'Settings'),
+      body: BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, state) {
         if (state is SettingsLoading || state is SettingsInitial) {
           return const Center(child: CircularProgressIndicator());
@@ -254,18 +259,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return ListView(
           padding: const EdgeInsets.fromLTRB(
             MSizes.defaultSpace,
-            MSizes.defaultSpace,
+            MSizes.sm,
             MSizes.defaultSpace,
             MSizes.lg,
           ),
           children: [
-            Text(
-              'Settings',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: MSizes.spaceBtwSections),
             _SettingsSectionCard(
               isDark: isDark,
               title: 'Profile',
@@ -418,6 +416,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         );
       },
+    ),
     );
   }
 }

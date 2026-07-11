@@ -100,7 +100,6 @@ class CategoryBreakdownSection extends StatelessWidget {
               items: items,
               total: total,
               accentColor: accentColor,
-              onSliceTap: onCategoryTap,
             ),
             const SizedBox(height: MSizes.md),
             CategoryRankedList(

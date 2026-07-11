@@ -5,13 +5,14 @@ import 'package:money_tracker_app/core/utils/helper_functions.dart';
 import 'package:money_tracker_app/data/models/enum/enum.dart';
 import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
 import 'package:money_tracker_app/features/stats/utils/stats_helpers.dart';
-import 'package:money_tracker_app/shared/widgets/empty_state.dart';
 import 'package:money_tracker_app/features/stats/widgets/category_breakdown_section.dart';
-import 'package:money_tracker_app/features/stats/widgets/stats_period_chips.dart';
 import 'package:money_tracker_app/features/stats/widgets/stats_summary_row.dart';
 import 'package:money_tracker_app/features/stats/widgets/stats_trend_chart.dart';
 import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
 import 'package:money_tracker_app/features/transactions/utils/transaction_filters.dart';
+import 'package:money_tracker_app/shared/widgets/appbar.dart';
+import 'package:money_tracker_app/shared/widgets/empty_state.dart';
+import 'package:money_tracker_app/shared/widgets/period_filter_section.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({
@@ -26,24 +27,27 @@ class StatsScreen extends StatefulWidget {
 }
 
 class _StatsScreenState extends State<StatsScreen> {
-  TransactionDateFilter _period = TransactionDateFilter.thisMonth;
+  TransactionFilters _periodFilters = const TransactionFilters(
+    dateFilter: TransactionDateFilter.thisMonth,
+  );
 
   void _openCategoryTransactions(
     CategoryBreakdownItem item,
     TransactionType type,
   ) {
     widget.onOpenTransactions?.call(
-      TransactionFilters(
+      _periodFilters.copyWith(
         type: type,
         category: item.category,
-        dateFilter: _period,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<TransactionBloc, TransactionState>(
+    return Scaffold(
+      appBar: tabScreenAppBar(context, title: 'Stats'),
+      body: BlocConsumer<TransactionBloc, TransactionState>(
       listener: (context, state) {
         if (state is TransactionError) {
           MHelperFunctions.showSnackBar(
@@ -67,7 +71,7 @@ class _StatsScreenState extends State<StatsScreen> {
         };
 
         final periodTransactions =
-            StatsHelpers.filterByPeriod(transactions, _period);
+            StatsHelpers.filterByPeriod(transactions, _periodFilters);
         final incomeTransactions = periodTransactions
             .where((t) => t.type == TransactionType.income)
             .toList();
@@ -96,23 +100,18 @@ class _StatsScreenState extends State<StatsScreen> {
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(
             MSizes.defaultSpace,
-            MSizes.defaultSpace,
+            MSizes.sm,
             MSizes.defaultSpace,
             24,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Stats',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: MSizes.md),
-              StatsPeriodChips(
-                period: _period,
-                onChanged: (period) => setState(() => _period = period),
+              PeriodFilterSection(
+                filters: _periodFilters,
+                compact: true,
+                onChanged: (filters) =>
+                    setState(() => _periodFilters = filters.periodOnly()),
               ),
               const SizedBox(height: MSizes.md),
               StatsSummaryRow(
@@ -149,12 +148,13 @@ class _StatsScreenState extends State<StatsScreen> {
               const SizedBox(height: MSizes.spaceBtwSections),
               StatsTrendChart(
                 transactions: periodTransactions,
-                period: _period,
+                periodFilters: _periodFilters,
               ),
             ],
           ),
         );
       },
+    ),
     );
   }
 }

@@ -7,6 +7,30 @@ import 'package:money_tracker_app/data/repositories/transaction_repository.dart'
 part 'category_event.dart';
 part 'category_state.dart';
 
+List<CategoryModel>? categoriesFromState(CategoryState state) {
+  return switch (state) {
+    CategoryLoaded(:final categories) => categories,
+    CategorySuccess(:final categories) => categories,
+    _ => null,
+  };
+}
+
+Future<List<CategoryModel>> ensureCategoriesLoaded(CategoryBloc bloc) async {
+  final cached = categoriesFromState(bloc.state);
+  if (cached != null) return cached;
+
+  if (bloc.state is! CategoryLoading) {
+    bloc.add(LoadCategories());
+  }
+
+  final state = await bloc.stream.firstWhere(
+    (s) =>
+        s is CategoryLoaded || s is CategorySuccess || s is CategoryError,
+  );
+
+  return categoriesFromState(state) ?? [];
+}
+
 class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   CategoryBloc({
     required CategoryRepository repository,

@@ -10,6 +10,7 @@ class MEmptyState extends StatelessWidget {
     this.subtitle,
     this.actionLabel,
     this.onAction,
+    this.compact = false,
   });
 
   final IconData icon;
@@ -17,65 +18,88 @@ class MEmptyState extends StatelessWidget {
   final String? subtitle;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(MSizes.lg),
-        child: Column(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isTight = constraints.maxHeight < 180;
+        final useCompact = compact || isTight;
+        final iconBox = useCompact ? 52.0 : 72.0;
+        final iconSize = useCompact ? 26.0 : 36.0;
+        final padding = useCompact ? MSizes.md : MSizes.lg;
+
+        final content = Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 72,
-              height: 72,
+              width: iconBox,
+              height: iconBox,
               decoration: BoxDecoration(
                 color: MColors.primary.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 36, color: MColors.primary),
+              child: Icon(icon, size: iconSize, color: MColors.primary),
             ),
-            const SizedBox(height: MSizes.md),
+            SizedBox(height: useCompact ? MSizes.sm : MSizes.md),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+              style: (useCompact
+                      ? Theme.of(context).textTheme.titleSmall
+                      : Theme.of(context).textTheme.titleMedium)
+                  ?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
             if (subtitle != null) ...[
-              const SizedBox(height: MSizes.sm),
+              SizedBox(height: useCompact ? MSizes.xs : MSizes.sm),
               Text(
                 subtitle!,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                maxLines: useCompact ? 2 : 3,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context)
                           .textTheme
                           .bodySmall
                           ?.color
                           ?.withValues(alpha: 0.75),
-                      height: 1.4,
+                      height: 1.3,
                     ),
               ),
             ],
             if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: MSizes.lg),
+              SizedBox(height: useCompact ? MSizes.md : MSizes.lg),
               FilledButton(
                 onPressed: onAction,
                 style: FilledButton.styleFrom(
                   backgroundColor: MColors.primary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: MSizes.lg,
-                    vertical: MSizes.md,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: useCompact ? MSizes.md : MSizes.lg,
+                    vertical: useCompact ? MSizes.sm : MSizes.md,
                   ),
                 ),
                 child: Text(actionLabel!),
               ),
             ],
           ],
-        ),
-      ),
+        );
+
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(padding),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight,
+              maxWidth: constraints.maxWidth,
+            ),
+            child: Center(child: content),
+          ),
+        );
+      },
     );
   }
 }

@@ -57,3 +57,26 @@ class MAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => Size.fromHeight(MSizes.appBarHeight);
 }
+
+PreferredSizeWidget tabScreenAppBar(
+  BuildContext context, {
+  required String title,
+  List<Widget>? actions,
+}) {
+  return MAppBar(
+    centerTitle: false,
+    titleSpacing: MSizes.defaultSpace,
+    title: Text(
+      title,
+      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+    ),
+    actions: actions == null
+        ? null
+        : [
+            ...actions,
+            const SizedBox(width: MSizes.sm),
+          ],
+  );
+}

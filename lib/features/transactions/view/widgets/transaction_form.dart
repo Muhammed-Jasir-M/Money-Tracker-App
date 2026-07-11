@@ -69,19 +69,8 @@ class _MTransactionFormState extends State<MTransactionForm> {
 
   Future<void> _openCategoryPicker() async {
     final bloc = context.read<CategoryBloc>();
-    var state = bloc.state;
-
-    if (state is! CategoryLoaded) {
-      bloc.add(LoadCategories());
-      await bloc.stream.firstWhere(
-        (s) => s is CategoryLoaded || s is CategoryError,
-      );
-      if (!mounted) return;
-      state = bloc.state;
-    }
-
-    final categories =
-        state is CategoryLoaded ? state.categories : <CategoryModel>[];
+    final categories = await ensureCategoriesLoaded(bloc);
+    if (!mounted) return;
 
     final result = await showCategoryPickerSheet(
       context: context,
