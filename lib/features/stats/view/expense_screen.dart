@@ -120,6 +120,7 @@ class ExpenseScreen extends StatelessWidget {
                               icon:
                                   categoryIcons[transaction.category.iconIndex],
                               title: transaction.category.title,
+                              note: transaction.note,
                               iconBgColor: Color(transaction.category.color),
                               amount: transaction.amount,
                               time: MHelperFunctions.formatTime(

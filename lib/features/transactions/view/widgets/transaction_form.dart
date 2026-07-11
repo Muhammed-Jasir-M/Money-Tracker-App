@@ -10,12 +10,10 @@ import 'package:money_tracker_app/data/models/category/category_model.dart';
 import 'package:money_tracker_app/data/models/enum/enum.dart';
 import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
 import 'package:money_tracker_app/features/categories/bloc/category_bloc.dart';
-import 'package:money_tracker_app/features/categories/view/add_category_screen.dart';
 import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.dart';
+import 'package:money_tracker_app/features/transactions/view/widgets/category_picker_sheet.dart';
 import 'package:money_tracker_app/shared/widgets/button.dart';
-import 'package:money_tracker_app/shared/widgets/radio_button.dart';
 import 'package:money_tracker_app/shared/widgets/text_form_field.dart';
-import 'package:money_tracker_app/shared/widgets/transaction_tile.dart';
 
 class MTransactionForm extends StatefulWidget {
   const MTransactionForm({
@@ -34,8 +32,8 @@ class MTransactionForm extends StatefulWidget {
 class _MTransactionFormState extends State<MTransactionForm> {
   final _formKey = GlobalKey<FormState>();
 
-  final _categoryController = TextEditingController();
   final _amountController = TextEditingController();
+  final _categoryController = TextEditingController();
   final _noteController = TextEditingController();
 
   TransactionType _transactionType = TransactionType.income;
@@ -43,7 +41,6 @@ class _MTransactionFormState extends State<MTransactionForm> {
   DateTime _selectedDateTime = DateTime.now();
 
   bool isLoading = false;
-  bool isExpanded = false;
 
   @override
   void initState() {
@@ -64,10 +61,58 @@ class _MTransactionFormState extends State<MTransactionForm> {
 
   @override
   void dispose() {
-    _categoryController.dispose();
     _amountController.dispose();
+    _categoryController.dispose();
     _noteController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openCategoryPicker() async {
+    final bloc = context.read<CategoryBloc>();
+    var state = bloc.state;
+
+    if (state is! CategoryLoaded) {
+      bloc.add(LoadCategories());
+      await bloc.stream.firstWhere(
+        (s) => s is CategoryLoaded || s is CategoryError,
+      );
+      if (!mounted) return;
+      state = bloc.state;
+    }
+
+    final categories =
+        state is CategoryLoaded ? state.categories : <CategoryModel>[];
+
+    final result = await showCategoryPickerSheet(
+      context: context,
+      categories: categories,
+      selectedCategory: _selectedCategory == CategoryModel.empty()
+          ? null
+          : _selectedCategory,
+      filterType: _transactionType,
+    );
+
+    if (!mounted) return;
+
+    if (result is CategoryModel) {
+      setState(() {
+        _selectedCategory = result;
+        _categoryController.text = result.title;
+      });
+    } else if (result == null) {
+      context.read<CategoryBloc>().add(LoadCategories());
+    }
+  }
+
+  void _setTransactionType(TransactionType type) {
+    setState(() {
+      _transactionType = type;
+      if (_selectedCategory != CategoryModel.empty() &&
+          _selectedCategory.type != type) {
+        _selectedCategory = CategoryModel.empty();
+        _categoryController.clear();
+      }
+    });
   }
 
   @override
@@ -100,121 +145,83 @@ class _MTransactionFormState extends State<MTransactionForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              MTextFormField(
-                controller: _categoryController,
-                hintText: 'Category',
-                readOnly: true,
-                prefixIcon: _selectedCategory != CategoryModel.empty()
-                    ? categoryIcons[_selectedCategory.iconIndex]
-                    : FontAwesomeIcons.list,
-                isOpened: isExpanded,
-                suffixIcon: FontAwesomeIcons.plus,
-                onTap: () => setState(() => isExpanded = !isExpanded),
-                onIconPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AddCategoryScreen(),
+              Text(
+                'Type',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: MSizes.formLabelSize,
                     ),
-                  );
-
-                  if (mounted) {
-                    context.read<CategoryBloc>().add(LoadCategories());
-                  }
-                },
               ),
-              if (isExpanded)
-                Container(
-                  width: MHelperFunctions.screenWidth(context),
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: isDark ? MColors.dark : MColors.light,
-                    borderRadius: const BorderRadius.vertical(
-                      bottom: Radius.circular(15),
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: BlocBuilder<CategoryBloc, CategoryState>(
-                      builder: (context, state) {
-                        if (state is CategoryLoading) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        } else if (state is CategoryLoaded) {
-                          return ListView.builder(
-                            physics: const BouncingScrollPhysics(),
-                            shrinkWrap: true,
-                            itemCount: state.categories.length,
-                            itemBuilder: (context, index) {
-                              final reversedCategories =
-                                  state.categories.reversed.toList();
-                              final category = reversedCategories[index];
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedCategory = category;
-                                    _categoryController.text = category.title;
-                                    isExpanded = false;
-                                  });
-                                },
-                                child: MTransactionTile(
-                                  icon: categoryIcons[category.iconIndex],
-                                  title: category.title,
-                                  showPriceDate: false,
-                                  iconBgColor: Color(category.color),
-                                ),
-                              );
-                            },
-                          );
-                        } else if (state is CategoryError) {
-                          return Center(
-                            child: Text(
-                              'Error: ${state.message}',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                          );
-                        } else {
-                          return Center(
-                            child: Text(
-                              'No Categories Found',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                ),
-              const SizedBox(height: MSizes.spaceBtwItems),
-              MTextFormField(
-                controller: _amountController,
-                hintText: 'Amount',
-                prefixIcon: FontAwesomeIcons.indianRupeeSign,
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: MSizes.spaceBtwItems),
+              const SizedBox(height: MSizes.sm),
               Row(
                 children: [
-                  MRadioButton(
-                    title: TransactionType.income.name,
-                    value: TransactionType.income,
-                    transactionType: _transactionType,
-                    onChanged: (value) =>
-                        setState(() => _transactionType = value!),
+                  Expanded(
+                    child: _TypeChip(
+                      label: 'Income',
+                      isSelected: _transactionType == TransactionType.income,
+                      color: Colors.green,
+                      onTap: () => _setTransactionType(TransactionType.income),
+                    ),
                   ),
                   const SizedBox(width: MSizes.sm),
-                  MRadioButton(
-                    title: TransactionType.expense.name,
-                    value: TransactionType.expense,
-                    transactionType: _transactionType,
-                    onChanged: (value) =>
-                        setState(() => _transactionType = value!),
+                  Expanded(
+                    child: _TypeChip(
+                      label: 'Expense',
+                      isSelected: _transactionType == TransactionType.expense,
+                      color: Colors.red,
+                      onTap: () => _setTransactionType(TransactionType.expense),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: MSizes.spaceBtwItems),
+              Text(
+                'Amount',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: MSizes.formLabelSize,
+                    ),
+              ),
+              const SizedBox(height: MSizes.sm),
+              TextFormField(
+                controller: _amountController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                decoration: InputDecoration(
+                  hintText: '0.00',
+                  prefixIcon: const Icon(
+                    FontAwesomeIcons.indianRupeeSign,
+                    size: 20,
+                    color: Colors.grey,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: isDark ? MColors.dark : MColors.light,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 20),
+                ),
+              ),
+              const SizedBox(height: MSizes.spaceBtwItems),
               MTextFormField(
+                controller: _categoryController,
+                label: 'Category',
+                hintText: 'Tap to select',
+                readOnly: true,
+                prefixIcon: _selectedCategory != CategoryModel.empty()
+                    ? categoryIcons[_selectedCategory.iconIndex]
+                    : FontAwesomeIcons.list,
+                suffixIcon: Icons.chevron_right,
+                onTap: _openCategoryPicker,
+              ),
+              const SizedBox(height: MSizes.spaceBtwItems),
+              MTextFormField(
+                label: 'Date',
                 hintText: DateFormat('dd/MM/yyyy').format(_selectedDateTime),
                 prefixIcon: FontAwesomeIcons.calendar,
                 readOnly: true,
@@ -241,6 +248,7 @@ class _MTransactionFormState extends State<MTransactionForm> {
               ),
               const SizedBox(height: MSizes.spaceBtwItems),
               MTextFormField(
+                label: 'Time',
                 hintText: DateFormat('hh:mm a').format(_selectedDateTime),
                 prefixIcon: FontAwesomeIcons.clock,
                 readOnly: true,
@@ -266,10 +274,11 @@ class _MTransactionFormState extends State<MTransactionForm> {
               const SizedBox(height: MSizes.spaceBtwItems),
               MTextFormField(
                 controller: _noteController,
-                hintText: 'Note (optional)',
+                label: 'Note',
+                hintText: 'Optional',
                 prefixIcon: FontAwesomeIcons.noteSticky,
               ),
-              const SizedBox(height: MSizes.spaceBtwItems),
+              const SizedBox(height: MSizes.spaceBtwSections),
               Center(
                 child: MButton(
                   btnTitle: isLoading
@@ -279,7 +288,7 @@ class _MTransactionFormState extends State<MTransactionForm> {
                       : isEditing
                           ? 'Update Transaction'
                           : 'Create Transaction',
-                  width: 180,
+                  width: double.infinity,
                   height: 50,
                   onTap: isLoading ? null : _validateAndSubmitTask,
                 ),
@@ -340,5 +349,53 @@ class _MTransactionFormState extends State<MTransactionForm> {
         ),
       );
     }
+  }
+}
+
+class _TypeChip extends StatelessWidget {
+  const _TypeChip({
+    required this.label,
+    required this.isSelected,
+    required this.color,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = MHelperFunctions.isDarkMode(context);
+    final baseColor = isDark ? MColors.dark : MColors.light;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: isSelected ? color.withValues(alpha: 0.15) : baseColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? color : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: isSelected ? color : null,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

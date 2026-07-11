@@ -12,24 +12,33 @@ class MTransactionTile extends StatelessWidget {
     required this.title,
     this.amount = 0.0,
     this.time = '',
+    this.note = '',
     this.showPriceDate = true,
     this.bgColor,
+    this.useCategoryTint = true,
     this.type,
     this.onTap,
+    this.trailing,
   });
 
   final Color iconBgColor, iconColor;
   final IconData icon;
-  final String title, time;
+  final String title, time, note;
   final double amount;
   final bool showPriceDate;
   final Color? bgColor;
+  final bool useCategoryTint;
   final TransactionType? type;
   final VoidCallback? onTap;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
     final isDark = MHelperFunctions.isDarkMode(context);
+    final baseBg = bgColor ?? (isDark ? MColors.dark : MColors.light);
+    final tileBg = useCategoryTint && bgColor == null
+        ? Color.alphaBlend(iconBgColor.withValues(alpha: 0.12), baseBg)
+        : baseBg;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -40,40 +49,70 @@ class MTransactionTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           child: Container(
             decoration: BoxDecoration(
-              color: bgColor ?? (isDark ? MColors.dark : MColors.light),
+              color: tileBg,
               borderRadius: BorderRadius.circular(14),
+              border: useCategoryTint
+                  ? Border(
+                      left: BorderSide(color: iconBgColor, width: 4),
+                    )
+                  : null,
             ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: iconBgColor,
-                              shape: BoxShape.circle,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: iconBgColor,
+                                shape: BoxShape.circle,
+                              ),
                             ),
-                          ),
-                          Icon(icon, color: iconColor),
-                        ],
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontWeight: FontWeight.bold,
+                            Icon(icon, color: iconColor),
+                          ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (note.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  note,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: MColors.outline,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   if (showPriceDate)
                     Column(
@@ -98,7 +137,9 @@ class MTransactionTile extends StatelessWidget {
                           ),
                         ),
                       ],
-                    ),
+                    )
+                  else if (trailing != null)
+                    trailing!,
                 ],
               ),
             ),

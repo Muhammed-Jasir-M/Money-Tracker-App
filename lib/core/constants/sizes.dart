@@ -47,5 +47,6 @@ class MSizes {
 
   // Input Field
   static const double inputFieldRadius = 8.0;
-  static const double spaceBtwInputFields = 16.0;
+  // Form label font size
+  static const double formLabelSize = 15.0;
 }

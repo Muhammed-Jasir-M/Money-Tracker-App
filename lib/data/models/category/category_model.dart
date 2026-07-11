@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:money_tracker_app/data/models/enum/enum.dart';
 
 part 'category_model.g.dart';
 
@@ -16,11 +17,15 @@ class CategoryModel extends HiveObject {
   @HiveField(3)
   int color;
 
+  @HiveField(4)
+  TransactionType type;
+
   CategoryModel({
     required this.cId,
     required this.title,
     required this.iconIndex,
     required this.color,
+    this.type = TransactionType.expense,
   });
 
   static CategoryModel empty() {
@@ -29,6 +34,7 @@ class CategoryModel extends HiveObject {
       title: '',
       iconIndex: 0,
       color: 0,
+      type: TransactionType.expense,
     );
   }
 }

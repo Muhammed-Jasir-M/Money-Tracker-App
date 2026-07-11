@@ -1,4 +1,5 @@
 import 'package:money_tracker_app/data/datasources/transaction_local_datasource.dart';
+import 'package:money_tracker_app/data/models/category/category_model.dart';
 import 'package:money_tracker_app/data/models/transaction/transaction_model.dart';
 
 class TransactionRepository {
@@ -22,5 +23,13 @@ class TransactionRepository {
 
   Future<void> delete(TransactionModel transaction) async {
     await _datasource.delete(transaction);
+  }
+
+  Future<void> syncCategory(CategoryModel category) async {
+    await _datasource.syncCategory(category);
+  }
+
+  bool hasTransactionsForCategory(String categoryId) {
+    return _datasource.hasTransactionsForCategory(categoryId);
   }
 }

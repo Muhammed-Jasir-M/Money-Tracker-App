@@ -49,7 +49,10 @@ Future<void> main() async {
               TransactionBloc(repository: transactionRepository),
         ),
         BlocProvider(
-          create: (context) => CategoryBloc(repository: categoryRepository),
+          create: (context) => CategoryBloc(
+            repository: categoryRepository,
+            transactionRepository: transactionRepository,
+          ),
         ),
         BlocProvider(
           create: (context) =>

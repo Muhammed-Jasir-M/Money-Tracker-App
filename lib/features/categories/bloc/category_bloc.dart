@@ -2,13 +2,17 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:money_tracker_app/data/models/category/category_model.dart';
 import 'package:money_tracker_app/data/repositories/category_repository.dart';
+import 'package:money_tracker_app/data/repositories/transaction_repository.dart';
 
 part 'category_event.dart';
 part 'category_state.dart';
 
 class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
-  CategoryBloc({required CategoryRepository repository})
-      : _repository = repository,
+  CategoryBloc({
+    required CategoryRepository repository,
+    required TransactionRepository transactionRepository,
+  })  : _repository = repository,
+        _transactionRepository = transactionRepository,
         super(CategoryInitial()) {
     on<LoadCategories>(_onLoadCategories);
     on<AddCategory>(_onAddCategory);
@@ -19,6 +23,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   }
 
   final CategoryRepository _repository;
+  final TransactionRepository _transactionRepository;
 
   Future<void> _onLoadCategories(
     LoadCategories event,
@@ -57,6 +62,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     emit(CategoryLoading());
     try {
       await _repository.update(event.category);
+      await _transactionRepository.syncCategory(event.category);
       final categories = await _repository.getAll();
       emit(CategorySuccess(
         categories: categories,
@@ -71,8 +77,17 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     DeleteCategory event,
     Emitter<CategoryState> emit,
   ) async {
-    emit(CategoryLoading());
     try {
+      if (_transactionRepository.hasTransactionsForCategory(event.category.cId)) {
+        emit(CategoryError(
+          'Cannot delete a category that has transactions',
+        ));
+        final categories = await _repository.getAll();
+        emit(CategoryLoaded(categories));
+        return;
+      }
+
+      emit(CategoryLoading());
       await _repository.delete(event.category);
       final categories = await _repository.getAll();
       emit(CategorySuccess(
@@ -81,6 +96,8 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
       ));
     } catch (e) {
       emit(CategoryError(e.toString()));
+      final categories = await _repository.getAll();
+      emit(CategoryLoaded(categories));
     }
   }
 }

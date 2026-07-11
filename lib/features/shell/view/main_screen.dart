@@ -38,7 +38,7 @@ class _MainScreenState extends State<MainScreen> {
         onIndexChange: _switchTab,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: _currentIndex == 3 ? null : const MFloatingActionButton(),
+      floatingActionButton: const MFloatingActionButton(),
       body: SafeArea(child: screens[_currentIndex]),
     );
   }
