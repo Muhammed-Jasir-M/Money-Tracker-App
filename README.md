@@ -20,8 +20,8 @@ Finora helps you manage day-to-day money: log transactions with categories and n
 - **Stats** — Category donut chart and daily/monthly trend line chart
 - **Budgets** — Total or per-category monthly limits with progress
 - **Categories** — Custom income/expense categories (icons & colors)
-- **Settings** — Theme, currency, profile name, app lock, biometrics
-- **Backup & export** — JSON backup/restore, CSV export for spreadsheets
+- **Settings** — Theme, currency, profile name, app lock, biometrics, in-app email feedback
+- **Backup & export** — ZIP archive backup/restore, CSV export, and PDF/CSV monthly reports
 - **Offline & private** — No login, no analytics, no cloud sync
 
 ## Tech stack
@@ -34,7 +34,7 @@ Finora helps you manage day-to-day money: log transactions with categories and n
 | **Charts** | `fl_chart` |
 | **Security** | `local_auth`, `flutter_secure_storage`, `crypto` |
 | **Media & files** | `image_picker`, `file_picker`, `path_provider` |
-| **Export / share** | `share_plus`, `csv` |
+| **Export / share** | `share_plus`, `csv`, `pdf`, `archive`, `url_launcher` |
 | **UI** | Material 3, `google_fonts`, `font_awesome_flutter` |
 
 ## Architecture

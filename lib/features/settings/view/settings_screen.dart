@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:money_tracker_app/core/constants/app_branding.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:money_tracker_app/core/backup/backup_service.dart';
 import 'package:money_tracker_app/core/constants/currencies.dart';
 import 'package:money_tracker_app/core/export/csv_export_service.dart';
@@ -552,6 +553,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _isEditingName = false);
   }
 
+  Future<void> _sendFeedback() async {
+    final Uri emailLaunchUri = Uri(
+      scheme: 'mailto',
+      path: 'jasirmm307@gmail.com',
+      queryParameters: {
+        'subject': 'Finora App Feedback (v${AppBranding.version})',
+        'body': 'Here is my feedback for Finora:\n\n',
+      },
+    );
+
+    try {
+      if (await canLaunchUrl(emailLaunchUri)) {
+        await launchUrl(emailLaunchUri);
+      } else {
+        if (!mounted) return;
+        MHelperFunctions.showErrorSnackBar(
+          context,
+          title: 'Could not send email',
+          message: 'Please email your feedback directly to jasirmm307@gmail.com',
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      MHelperFunctions.showErrorSnackBar(
+        context,
+        title: 'Error opening email',
+        message: e.toString(),
+      );
+    }
+  }
+
   Widget _buildProfileSection(AppSettings settings) {
     final hasSavedName = settings.userName.trim().isNotEmpty;
     final showEditor = !hasSavedName || _isEditingName;
@@ -929,6 +961,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'Offline & private',
                     subtitle:
                         'All data stays on your device. No account or cloud sync.',
+                  ),
+                  const SizedBox(height: MSizes.sm),
+                  _SettingsTile(
+                    icon: Icons.feedback_outlined,
+                    title: 'Send feedback',
+                    subtitle: 'Report bugs or request features via email',
+                    onTap: _sendFeedback,
                   ),
                   const SizedBox(height: MSizes.sm),
                   _SettingsTile(
