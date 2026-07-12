@@ -120,10 +120,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   void _openFiltersSortSheet() {
     FocusManager.instance.primaryFocus?.unfocus();
 
-    final categoryController = TextEditingController(
-      text: _filters.category?.title ?? '',
-    );
-
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -131,31 +127,23 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            void syncCategoryField() {
-              categoryController.text = _filters.category?.title ?? '';
-            }
-
             void onFiltersChanged(TransactionFilters filters) {
               _updateFilters(filters);
-              syncCategoryField();
               setSheetState(() {});
             }
 
             Future<void> onClearFilters() async {
               await _confirmClearFilters();
               if (context.mounted) {
-                syncCategoryField();
                 setSheetState(() {});
               }
             }
 
             return _TransactionFiltersSortSheet(
               filters: _filters,
-              categoryController: categoryController,
               onChanged: onFiltersChanged,
               onTypeChanged: (type) {
                 _applyTypeFilter(type);
-                syncCategoryField();
                 setSheetState(() {});
               },
               onClear: _filters.hasActiveFilters ? onClearFilters : null,
@@ -163,7 +151,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           },
         );
       },
-    ).whenComplete(categoryController.dispose);
+    );
   }
 
   bool get _hasCustomSort =>
@@ -388,49 +376,82 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 }
 
-class _TransactionFiltersSortSheet extends StatelessWidget {
+class _TransactionFiltersSortSheet extends StatefulWidget {
   const _TransactionFiltersSortSheet({
     required this.filters,
-    required this.categoryController,
     required this.onChanged,
     required this.onTypeChanged,
     this.onClear,
   });
 
   final TransactionFilters filters;
-  final TextEditingController categoryController;
   final ValueChanged<TransactionFilters> onChanged;
   final ValueChanged<TransactionType?> onTypeChanged;
   final Future<void> Function()? onClear;
 
-  Future<void> _openCategoryFilter(BuildContext context) async {
+  @override
+  State<_TransactionFiltersSortSheet> createState() =>
+      _TransactionFiltersSortSheetState();
+}
+
+class _TransactionFiltersSortSheetState
+    extends State<_TransactionFiltersSortSheet> {
+  late final TextEditingController _categoryController;
+
+  @override
+  void initState() {
+    super.initState();
+    _categoryController = TextEditingController(
+      text: widget.filters.category?.title ?? '',
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant _TransactionFiltersSortSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final nextText = widget.filters.category?.title ?? '';
+    if (_categoryController.text != nextText) {
+      _categoryController.text = nextText;
+    }
+  }
+
+  @override
+  void dispose() {
+    _categoryController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _openCategoryFilter() async {
     final bloc = context.read<CategoryBloc>();
     final categories = await ensureCategoriesLoaded(bloc);
-    if (!context.mounted) return;
+    if (!mounted) return;
 
     final result = await showCategoryPickerSheet(
       context: context,
       categories: categories,
-      selectedCategory: filters.category,
-      filterType: filters.type,
+      selectedCategory: widget.filters.category,
+      filterType: widget.filters.type,
       allowAllOption: true,
       showAddButton: false,
       showTypeBadge: false,
       title: 'Filter by category',
     );
 
-    if (!context.mounted || result == null) return;
+    if (!mounted || result == null) return;
 
     if (result == 'all') {
-      onChanged(filters.copyWith(clearCategory: true));
+      widget.onChanged(widget.filters.copyWith(clearCategory: true));
       return;
     }
 
-    onChanged(filters.copyWith(category: result as CategoryModel));
+    widget.onChanged(
+      widget.filters.copyWith(category: result as CategoryModel),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final filters = widget.filters;
     final maxHeight = MediaQuery.sizeOf(context).height * 0.85;
     final sectionTitleStyle = Theme.of(context).textTheme.titleSmall?.copyWith(
           fontWeight: FontWeight.w600,
@@ -465,7 +486,7 @@ class _TransactionFiltersSortSheet extends StatelessWidget {
                     child: _FilterOptionChip(
                       label: 'All',
                       selected: filters.type == null,
-                      onTap: () => onTypeChanged(null),
+                      onTap: () => widget.onTypeChanged(null),
                     ),
                   ),
                   const SizedBox(width: MSizes.sm),
@@ -474,7 +495,8 @@ class _TransactionFiltersSortSheet extends StatelessWidget {
                       label: 'Income',
                       selected: filters.type == TransactionType.income,
                       selectedColor: Colors.green,
-                      onTap: () => onTypeChanged(TransactionType.income),
+                      onTap: () =>
+                          widget.onTypeChanged(TransactionType.income),
                     ),
                   ),
                   const SizedBox(width: MSizes.sm),
@@ -483,7 +505,8 @@ class _TransactionFiltersSortSheet extends StatelessWidget {
                       label: 'Expense',
                       selected: filters.type == TransactionType.expense,
                       selectedColor: Colors.red,
-                      onTap: () => onTypeChanged(TransactionType.expense),
+                      onTap: () =>
+                          widget.onTypeChanged(TransactionType.expense),
                     ),
                   ),
                 ],
@@ -493,11 +516,11 @@ class _TransactionFiltersSortSheet extends StatelessWidget {
               const SizedBox(height: MSizes.sm),
               PeriodFilterSection(
                 filters: filters,
-                onChanged: onChanged,
+                onChanged: widget.onChanged,
               ),
               const SizedBox(height: MSizes.md),
               MTextFormField(
-                controller: categoryController,
+                controller: _categoryController,
                 label: 'Category',
                 hintText: 'All categories',
                 prefixIcon: filters.category != null
@@ -505,14 +528,14 @@ class _TransactionFiltersSortSheet extends StatelessWidget {
                     : Icons.category_outlined,
                 readOnly: true,
                 suffixIcon: Icons.chevron_right,
-                onTap: () => _openCategoryFilter(context),
+                onTap: _openCategoryFilter,
               ),
-              if (onClear != null) ...[
+              if (widget.onClear != null) ...[
                 const SizedBox(height: MSizes.md),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: onClear,
+                    onPressed: widget.onClear,
                     child: const Text('Clear filters'),
                   ),
                 ),
@@ -523,7 +546,7 @@ class _TransactionFiltersSortSheet extends StatelessWidget {
               SortOrderSection(
                 sortOrder: filters.sortOrder,
                 onChanged: (order) =>
-                    onChanged(filters.copyWith(sortOrder: order)),
+                    widget.onChanged(filters.copyWith(sortOrder: order)),
               ),
               const SizedBox(height: MSizes.lg),
             ],

@@ -1,10 +1,12 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:money_tracker_app/core/constants/app_branding.dart';
 import 'package:money_tracker_app/core/backup/backup_service.dart';
 import 'package:money_tracker_app/core/constants/currencies.dart';
 import 'package:money_tracker_app/core/export/csv_export_service.dart';
+import 'package:money_tracker_app/core/export/monthly_report_service.dart';
 import 'package:money_tracker_app/core/security/lock_service.dart';
 import 'package:money_tracker_app/core/storage/receipt_storage.dart';
 import 'package:money_tracker_app/core/constants/colors.dart';
@@ -21,6 +23,7 @@ import 'package:money_tracker_app/features/transactions/bloc/transaction_bloc.da
 import 'package:money_tracker_app/shared/widgets/appbar.dart';
 import 'package:money_tracker_app/shared/widgets/confirm_dialog.dart';
 import 'package:money_tracker_app/shared/widgets/empty_state.dart';
+import 'package:money_tracker_app/shared/widgets/month_picker_sheet.dart';
 import 'package:money_tracker_app/shared/widgets/text_form_field.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -36,6 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isEditingName = false;
   bool _isBackupBusy = false;
   bool _isExportBusy = false;
+  bool _isReportBusy = false;
   bool? _biometricAvailable;
 
   @override
@@ -170,6 +174,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  MonthlyReportService _monthlyReportService() {
+    return MonthlyReportService(
+      transactionRepository: context.read<TransactionBloc>().repository,
+    );
+  }
+
   Future<void> _exportCsv(AppSettings settings) async {
     setState(() => _isExportBusy = true);
     try {
@@ -191,6 +201,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     } finally {
       if (mounted) setState(() => _isExportBusy = false);
+    }
+  }
+
+  Future<DateTime?> _pickReportMonth() {
+    return showMonthPickerSheet(context: context);
+  }
+
+  Future<void> _exportMonthlyReport(AppSettings settings) async {
+    final month = await _pickReportMonth();
+    if (month == null || !mounted) return;
+
+    setState(() => _isReportBusy = true);
+    try {
+      await _monthlyReportService().exportMonthAndShare(
+        month: month,
+        currencySymbol: settings.currencySymbol,
+      );
+      if (!mounted) return;
+      MHelperFunctions.showSuccessSnackBar(
+        context,
+        title: 'Report ready',
+        message: 'CSV and PDF for ${DateFormat('MMMM yyyy').format(month)}',
+      );
+    } on MonthlyReportException catch (e) {
+      if (!mounted) return;
+      MHelperFunctions.showErrorSnackBar(
+        context,
+        title: 'Report failed',
+        message: e.message,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      MHelperFunctions.showErrorSnackBar(
+        context,
+        title: 'Report failed',
+        message: e.toString(),
+      );
+    } finally {
+      if (mounted) setState(() => _isReportBusy = false);
     }
   }
 
@@ -391,7 +440,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['json'],
+      allowedExtensions: ['zip', 'json'],
     );
     if (!mounted) return;
     if (result == null || result.files.single.path == null) return;
@@ -793,30 +842,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 children: [
                   _SettingsTile(
-                    icon: Icons.upload_file_outlined,
+                    icon: Icons.folder_zip_outlined,
                     title: 'Export backup',
                     subtitle: _isBackupBusy
                         ? 'Please wait...'
-                        : 'Save transactions, categories, budgets, settings, and photos',
+                        : 'ZIP file with data.json and photo files',
                     onTap: _isBackupBusy ? null : _exportBackup,
                   ),
                   const SizedBox(height: MSizes.sm),
                   _SettingsTile(
                     icon: Icons.restore_outlined,
                     title: 'Restore backup',
-                    subtitle: 'Replace current data from a backup JSON file',
+                    subtitle: 'Replace current data from a .zip or .json backup',
                     onTap: _isBackupBusy ? null : _restoreBackup,
                   ),
                   const SizedBox(height: MSizes.sm),
                   _SettingsTile(
                     icon: Icons.table_chart_outlined,
-                    title: 'Export transactions (CSV)',
+                    title: 'Export all transactions (CSV)',
                     subtitle: _isExportBusy
                         ? 'Please wait...'
-                        : 'Spreadsheet-friendly export for Excel or Google Sheets',
-                    onTap: _isExportBusy || _isBackupBusy
+                        : 'Full spreadsheet export for Excel or Google Sheets',
+                    onTap: _isExportBusy || _isBackupBusy || _isReportBusy
                         ? null
                         : () => _exportCsv(settings),
+                  ),
+                  const SizedBox(height: MSizes.sm),
+                  _SettingsTile(
+                    icon: Icons.picture_as_pdf_outlined,
+                    title: 'Monthly report (CSV + PDF)',
+                    subtitle: _isReportBusy
+                        ? 'Please wait...'
+                        : 'Pick a month and share income, expense, and transactions',
+                    onTap: _isExportBusy || _isBackupBusy || _isReportBusy
+                        ? null
+                        : () => _exportMonthlyReport(settings),
                   ),
                 ],
               ),
