@@ -7,7 +7,7 @@ Offline-first personal finance app built with Flutter. Track income and expenses
 | **App name** | Finora |
 | **Package ID** | `com.finora.app` |
 | **Version** | 1.0.0 |
-| **Platforms** | Android · iOS · Web (partial) |
+| **Platforms** | Android · iOS |
 
 ## About
 
@@ -81,8 +81,6 @@ flutter build apk --release
 
 APK output: `build/app/outputs/flutter-apk/app-release.apk`
 
-> **Note:** Package ID is `com.finora.app`. Uninstall older builds (`com.example.*` or `com.moneytracker.app`) before installing a new package ID.
-
 ## Developer notes
 
 **Regenerate app icon** — replace `assets/icon/app_icon.png` (1024×1024), then:
@@ -96,18 +94,6 @@ dart run flutter_launcher_icons
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
-
-**After adding native plugins** (e.g. biometrics) — use a full rebuild, not hot restart:
-
-```bash
-flutter run
-```
-
-Branding constants: `lib/core/constants/app_branding.dart`
-
-## License
-
-Personal and portfolio use. Add a `LICENSE` file (e.g. MIT) if you publish the repo publicly.
 
 ## Author
 
