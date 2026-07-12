@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finora - Flutter Personal Finance App Setup Guide</title>
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary: #00B2E7;
+      --primary-dark: #0099c7;
+      --primary-light: #e6f7fc;
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
+      --emerald-600: #059669;
+      --emerald-50: #ecfdf5;
+      --amber-600: #d97706;
+      --amber-50: #fffbeb;
+      --rose-600: #e11d48;
+      --rose-50: #fff1f2;
+      --sidebar-width: 280px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--slate-700);
+      background-color: var(--slate-50);
+      line-height: 1.6;
+      display: flex;
+    }
+
+    /* Sidebar Styling */
+    aside {
+      width: var(--sidebar-width);
+      background-color: var(--slate-900);
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      color: white;
+      z-index: 100;
+    }
+
+    .brand-section {
+      padding: 2.5rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background-color: var(--primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: white;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .sidebar-menu a {
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: block;
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-menu a:hover {
+      color: white;
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .sidebar-menu a.active {
+      color: white;
+      background-color: var(--primary);
+    }
+
+    /* Main Content Styling */
+    main {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      padding: 4rem 5%;
+      max-width: 1100px;
+      min-height: 100vh;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: 'Outfit', sans-serif;
+      color: var(--slate-900);
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-size: 1.15rem;
+      color: var(--slate-700);
+      margin-bottom: 3rem;
+    }
+
+    h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-top: 3.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--slate-200);
+    }
+
+    h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-top: 2rem;
+    }
+
+    p {
+      margin-bottom: 1.25rem;
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* Step Numbers */
+    .step-list {
+      list-style-type: none;
+      counter-reset: steps;
+      margin-bottom: 2rem;
+    }
+
+    .step-item {
+      position: relative;
+      padding-left: 3.5rem;
+      margin-bottom: 2rem;
+      counter-increment: steps;
+    }
+
+    .step-item::before {
+      content: counter(steps);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 2.25rem;
+      height: 2.25rem;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    /* Alerts and Cards */
+    .alert {
+      padding: 1.25rem 1.5rem;
+      border-radius: 12px;
+      margin: 1.5rem 0;
+      display: flex;
+      gap: 12px;
+    }
+
+    .alert-info {
+      background-color: var(--primary-light);
+      border-left: 4px solid var(--primary);
+      color: var(--slate-800);
+    }
+
+    .alert-warning {
+      background-color: var(--amber-50);
+      border-left: 4px solid var(--amber-600);
+      color: var(--slate-800);
+    }
+
+    .alert-danger {
+      background-color: var(--rose-50);
+      border-left: 4px solid var(--rose-600);
+      color: var(--slate-800);
+    }
+
+    .alert-title {
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    /* Code Block Styles */
+    pre {
+      background-color: var(--slate-900);
+      color: #e2e8f0;
+      padding: 1.25rem;
+      border-radius: 10px;
+      overflow-x: auto;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.9rem;
+      margin: 1rem 0 1.5rem 0;
+      position: relative;
+    }
+
+    code {
+      font-family: 'Courier New', Courier, monospace;
+      background-color: var(--slate-100);
+      color: var(--rose-600);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    pre code {
+      background-color: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+
+    .copy-btn:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Table styles */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      border: 1px solid var(--slate-200);
+      padding: 0.75rem 1rem;
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--slate-100);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) {
+      background-color: var(--slate-50);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      aside {
+        width: 100%;
+        height: auto;
+        position: relative;
+      }
+      body {
+        flex-direction: column;
+      }
+      main {
+        margin-left: 0;
+        padding: 2rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar Navigation -->
+  <aside>
+    <div class="brand-section">
+      <div class="brand-logo">F</div>
+      <div class="brand-title">Finora Admin</div>
+    </div>
+    <ul class="sidebar-menu">
+      <li><a href="#intro" class="active">1. Introduction</a></li>
+      <li><a href="#setup">2. Environment Setup</a></li>
+      <li><a href="#run">3. Running the Project</a></li>
+      <li><a href="#rebrand">4. Rebranding & Setup</a></li>
+      <li><a href="#architecture">5. Code Architecture</a></li>
+      <li><a href="#release">6. Building & Release</a></li>
+      <li><a href="#support">7. Support & License</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main>
+    <section id="intro">
+      <h1>Finora Setup & Customization Guide</h1>
+      <p class="subtitle">Official setup guide for the Finora Flutter Personal Finance App</p>
+
+      <h2>1. Introduction</h2>
+      <p>
+        <strong>Finora</strong> is a production-ready, offline-first personal finance app built with Flutter. All data is kept securely on the user's device using Hive database storage.
+      </p>
+      
+      <div class="alert alert-info">
+        <div>
+          <div class="alert-title">Highlights:</div>
+          <ul>
+            <li>No cloud backend required — zero server cost.</li>
+            <li>Robust state management via Bloc architecture.</li>
+            <li>Advanced local features: monthly budgets, customized categories, CSV data export, and PDF trends.</li>
+            <li>Biometric/PIN Security using device credentials.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="setup">
+      <h2>2. Environment Setup</h2>
+      <p>Before launching the code, ensure you have the proper Flutter development environment set up:</p>
+      
+      <ol class="step-list">
+        <li class="step-item">
+          <strong>Install Flutter SDK:</strong>
+          <p>Download and install the Flutter SDK (version 3.6.0 or higher) from the official website. Follow installation steps for your Operating System.</p>
+        </li>
+        <li class="step-item">
+          <strong>Install your IDE:</strong>
+          <p>We recommend using <strong>VS Code</strong> (with Flutter and Dart extensions) or <strong>Android Studio</strong>.</p>
+        </li>
+        <li class="step-item">
+          <strong>Verify Environment:</strong>
+          <p>Run the doctor tool in your command line to verify your setup is complete:</p>
+          <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>flutter doctor</code></pre>
+        </li>
+      </ol>
+    </section>
+
+    <section id="run">
+      <h2>3. Running the Project</h2>
+      <p>Once your environment is ready, open the project workspace in your editor and follow these commands:</p>
+
+      <ol class="step-list">
+        <li class="step-item">
+          <strong>Get Packages:</strong>
+          <p>Install all project dependencies declared in the pubspec file:</p>
+          <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>flutter pub get</code></pre>
+        </li>
+        <li class="step-item">
+          <strong>Run on Emulator/Device:</strong>
+          <p>Launch the app on a connected Android/iOS device or desktop emulator:</p>
+          <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>flutter run</code></pre>
+        </li>
+      </ol>
+    </section>
+
+    <section id="rebrand">
+      <h2>4. Rebranding & Customization</h2>
+      <p>To brand this app as your own or customize it for your clients, modify the following core values:</p>
+
+      <h3>4.1 Global Metadata Config</h3>
+      <p>You can change the App Name, bundle identifier, default themes, and app configuration values in a single centralized branding file located at:</p>
+      <p>📁 <code>lib/core/constants/app_branding.dart</code></p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>class AppBranding {
+  AppBranding._();
+
+  static const displayName = 'Finora'; // Change to your custom name
+  static const applicationId = 'com.finora.app'; // Update package ID
+  static const version = '1.0.0';
+  static const primaryColorHex = '#00B2E7'; // Your brand primary color
+}</code></pre>
+
+      <h3>4.2 Global Package Name Rename</h3>
+      <div class="alert alert-warning">
+        <div>
+          <div class="alert-title">Important:</div>
+          <p>To publish the app on Google Play or App Store, you must change the native package name (from <code>com.finora.app</code>) to your own domain.</p>
+        </div>
+      </div>
+      <p>We recommend using the standard package renamer tool. Add the package to dev dependencies or run it directly:</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>dart run change_app_package_name:main com.yourcompany.appname</code></pre>
+
+      <h3>4.3 Regenerating Launcher Icons</h3>
+      <p>To change the launcher icons across all platforms (Android, iOS, Web):</p>
+      <ol>
+        <li>Replace the template icon file at <code>assets/icon/app_icon.png</code> with your own logo (1024x1024 px).</li>
+        <li>Run the following generator command in your project terminal:</li>
+      </ol>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>dart run flutter_launcher_icons</code></pre>
+    </section>
+
+    <section id="architecture">
+      <h2>5. Code Architecture</h2>
+      <p>Finora is built using Clean Architecture practices combined with robust state management:</p>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>Layer</th>
+            <th>Location</th>
+            <th>Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Core</strong></td>
+            <td><code>lib/core/</code></td>
+            <td>Themes, custom export tools (PDF/CSV), app locks, database setup.</td>
+          </tr>
+          <tr>
+            <td><strong>Data</strong></td>
+            <td><code>lib/data/</code></td>
+            <td>Hive schemas, data persistence entities, mapping repos.</td>
+          </tr>
+          <tr>
+            <td><strong>Features</strong></td>
+            <td><code>lib/features/</code></td>
+            <td>Visual flows (Dashboard, Budget, Transactions) containing Bloc files and UI Pages.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>5.1 Regenerating Hive TypeAdapters</h3>
+      <p>If you modify any database models (e.g. adding new fields to <code>BudgetModel</code> or <code>TransactionModel</code> in <code>lib/data/models/</code>), you must rebuild the Hive local database adapters by running:</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>dart run build_runner build --delete-conflicting-outputs</code></pre>
+    </section>
+
+    <section id="release">
+      <h2>6. Building & Release</h2>
+      <p>Follow these steps to produce the final release packages for store deployment.</p>
+
+      <h3>6.1 Android Keystore & Build</h3>
+      <p>Before launching a production APK or App Bundle, you must sign it:</p>
+      <ol>
+        <li>Generate a secure keystore file using terminal keytool.</li>
+        <li>Create a file named <code>key.properties</code> in the <code>android/</code> directory to map configuration aliases.</li>
+        <li>Build the final Google Play Bundle (.aab):</li>
+      </ol>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>flutter build appbundle --release</code></pre>
+
+      <h3>6.2 iOS App Store Build</h3>
+      <p>Open the <code>ios/Runner.xcworkspace</code> in Xcode on a macOS system:</p>
+      <ol>
+        <li>Select your developer Signing & Capabilities profile under targets.</li>
+        <li>Compile the release archive:</li>
+      </ol>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>flutter build ipa --release</code></pre>
+    </section>
+
+    <section id="support">
+      <h2>7. Support & License</h2>
+      <p>For customization requests, custom feature integration (like database sync, AdMob, etc.), or inquiries, feel free to reach out:</p>
+      <ul style="list-style: none; margin-top: 15px; display: flex; flex-direction: column; gap: 8px;">
+        <li>✉️ <strong>Email:</strong> <a href="mailto:jasirmm307@gmail.com">jasirmm307@gmail.com</a></li>
+        <li>🌐 <strong>Portfolio:</strong> <a href="https://muhammed-jasir-m.vercel.app/" target="_blank">muhammed-jasir-m.vercel.app</a></li>
+        <li>💻 <strong>GitHub:</strong> <a href="https://github.com/Muhammed-Jasir-M" target="_blank">github.com/Muhammed-Jasir-M</a></li>
+      </ul>
+      <p style="margin-top: 20px;">Created by: <strong>Muhammed Jasir</strong></p>
+    </section>
+  </main>
+
+  <script>
+    // Copy Code snippet functionality
+    function copyCode(button) {
+      const code = button.nextElementSibling.innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        button.innerText = 'Copied!';
+        setTimeout(() => {
+          button.innerText = 'Copy';
+        }, 2000);
+      });
+    }
+
+    // Scroll Spy active navigation effect
+    const links = document.querySelectorAll('.sidebar-menu a');
+    const sections = document.querySelectorAll('section');
+
+    window.addEventListener('scroll', () => {
+      let currentSectionId = '';
+      sections.forEach(section => {
+        const top = section.offsetTop - 100;
+        if (window.scrollY >= top) {
+          currentSectionId = section.getAttribute('id');
+        }
+      });
+
+      links.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === `#${currentSectionId}`) {
+          link.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
