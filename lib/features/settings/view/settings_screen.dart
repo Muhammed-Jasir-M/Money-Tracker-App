@@ -554,19 +554,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _sendFeedback() async {
-    final Uri emailLaunchUri = Uri(
-      scheme: 'mailto',
-      path: 'jasirmm307@gmail.com',
-      queryParameters: {
-        'subject': 'Finora App Feedback (v${AppBranding.version})',
-        'body': 'Here is my feedback for Finora:\n\n',
-      },
-    );
+    final String email = 'jasirmm307@gmail.com';
+    final String subject = Uri.encodeComponent('Finora App Feedback (v${AppBranding.version})');
+    final String body = Uri.encodeComponent('Here is my feedback for Finora:\n\n');
+    final Uri emailLaunchUri = Uri.parse('mailto:$email?subject=$subject&body=$body');
 
     try {
-      if (await canLaunchUrl(emailLaunchUri)) {
-        await launchUrl(emailLaunchUri);
-      } else {
+      final success = await launchUrl(
+        emailLaunchUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!success) {
         if (!mounted) return;
         MHelperFunctions.showErrorSnackBar(
           context,
@@ -579,7 +577,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       MHelperFunctions.showErrorSnackBar(
         context,
         title: 'Error opening email',
-        message: e.toString(),
+        message: 'No email client configured. Please email jasirmm307@gmail.com',
       );
     }
   }
@@ -1189,7 +1187,6 @@ class _SettingsSwitchTile extends StatelessWidget {
             Switch.adaptive(
               value: value,
               onChanged: onChanged,
-              activeThumbColor: MColors.primary,
             ),
           ],
         ),

@@ -45,13 +45,13 @@ jobs:
           overwrite: true
 
       - name: Build Release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --split-per-abi
 
-      - name: Upload Release APK
+      - name: Upload Release APKs
         uses: actions/upload-artifact@v4
         with:
-          name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: release-apks
+          path: build/app/outputs/flutter-apk/app-*-release.apk
           overwrite: true
 
       - name: Delete old artifacts
