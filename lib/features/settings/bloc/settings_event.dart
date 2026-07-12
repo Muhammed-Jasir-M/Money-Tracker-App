@@ -51,3 +51,16 @@ class UpdateUseBiometric extends SettingsEvent {
   @override
   List<Object?> get props => [useBiometric];
 }
+
+class CompleteOnboarding extends SettingsEvent {
+  CompleteOnboarding({
+    required this.userName,
+    required this.currencySymbol,
+  });
+
+  final String userName;
+  final String currencySymbol;
+
+  @override
+  List<Object?> get props => [userName, currencySymbol];
+}

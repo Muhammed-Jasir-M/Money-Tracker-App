@@ -13,6 +13,7 @@ class SettingsLocalDatasource {
   static const _currencySymbolKey = 'currencySymbol';
   static const _lockEnabledKey = 'lockEnabled';
   static const _useBiometricKey = 'useBiometric';
+  static const _onboardingCompletedKey = 'onboardingCompleted';
 
   AppSettings getSettings() {
     final themeValue = _box.get(_themeKey, defaultValue: 'system') as String;
@@ -32,7 +33,17 @@ class SettingsLocalDatasource {
           : CurrencyOptions.defaultSymbol,
       lockEnabled: lockEnabled,
       useBiometric: useBiometric,
+      onboardingCompleted: _readOnboardingCompleted(),
     );
+  }
+
+  /// Missing flag: existing installs (non-empty box) skip onboarding;
+  /// brand-new installs see it.
+  bool _readOnboardingCompleted() {
+    if (_box.containsKey(_onboardingCompletedKey)) {
+      return _box.get(_onboardingCompletedKey) as bool;
+    }
+    return _box.isNotEmpty;
   }
 
   Future<void> saveThemeMode(ThemeMode themeMode) async {
@@ -55,11 +66,16 @@ class SettingsLocalDatasource {
     await _box.put(_useBiometricKey, useBiometric);
   }
 
+  Future<void> saveOnboardingCompleted(bool completed) async {
+    await _box.put(_onboardingCompletedKey, completed);
+  }
+
   Future<void> saveAll(AppSettings settings) async {
     await saveThemeMode(settings.themeMode);
     await saveUserName(settings.userName);
     await saveCurrencySymbol(settings.currencySymbol);
     await saveLockEnabled(settings.lockEnabled);
     await saveUseBiometric(settings.useBiometric);
+    await saveOnboardingCompleted(settings.onboardingCompleted);
   }
 }

@@ -51,6 +51,16 @@ class SettingsRepository {
     return _datasource.getSettings();
   }
 
+  Future<AppSettings> completeOnboarding({
+    required String userName,
+    required String currencySymbol,
+  }) async {
+    await _datasource.saveUserName(userName);
+    await _datasource.saveCurrencySymbol(currencySymbol);
+    await _datasource.saveOnboardingCompleted(true);
+    return _datasource.getSettings();
+  }
+
   Future<void> setPin(String pin) => _lockService.setPin(pin);
 
   Future<bool> verifyPin(String pin) => _lockService.verifyPin(pin);

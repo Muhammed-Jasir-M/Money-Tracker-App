@@ -141,6 +141,7 @@ class BackupService {
         'currencySymbol': settings.currencySymbol,
         'lockEnabled': settings.lockEnabled,
         'useBiometric': settings.useBiometric,
+        'onboardingCompleted': settings.onboardingCompleted,
       };
 
   AppSettings _settingsFromJson(Map<String, dynamic> json) => AppSettings(
@@ -151,6 +152,8 @@ class BackupService {
         currencySymbol: json['currencySymbol'] as String? ?? '₹',
         lockEnabled: json['lockEnabled'] as bool? ?? false,
         useBiometric: json['useBiometric'] as bool? ?? false,
+        // Older backups predate this flag — treat as already onboarded.
+        onboardingCompleted: json['onboardingCompleted'] as bool? ?? true,
       );
 
   Map<String, dynamic> _categoryToJson(CategoryModel category) => {

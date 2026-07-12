@@ -4,6 +4,7 @@ import 'package:money_tracker_app/core/constants/app_branding.dart';
 import 'package:money_tracker_app/core/currency/currency_scope.dart';
 import 'package:money_tracker_app/core/security/lock_gate.dart';
 import 'package:money_tracker_app/core/theme/theme.dart';
+import 'package:money_tracker_app/features/onboarding/view/onboarding_screen.dart';
 import 'package:money_tracker_app/features/settings/bloc/settings_bloc.dart';
 import 'package:money_tracker_app/features/shell/view/main_screen.dart';
 
@@ -17,6 +18,8 @@ class MyApp extends StatelessWidget {
         final settings = state is SettingsLoaded ? state.settings : null;
         final themeMode = settings?.themeMode ?? ThemeMode.system;
         final currencySymbol = settings?.currencySymbol ?? '₹';
+        final showOnboarding =
+            settings != null && !settings.onboardingCompleted;
 
         return MaterialApp(
           debugShowCheckedModeBanner: false,
@@ -32,7 +35,9 @@ class MyApp extends StatelessWidget {
               ),
             );
           },
-          home: const MainScreen(),
+          home: showOnboarding
+              ? const OnboardingScreen()
+              : const MainScreen(),
         );
       },
     );
