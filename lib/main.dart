@@ -53,10 +53,14 @@ Future<void> main() async {
   );
   final initialSettings = settingsRepository.getSettingsSync();
 
-  await GoogleFonts.pendingFonts([
-    GoogleFonts.poppins(),
-    GoogleFonts.lato(),
-  ]);
+  try {
+    await GoogleFonts.pendingFonts([
+      GoogleFonts.poppins(),
+      GoogleFonts.lato(),
+    ]);
+  } catch (e) {
+    debugPrint('Failed to pre-cache Google Fonts: $e');
+  }
 
   await DefaultCategoriesSeeder.seedIfEmpty(
     categoryRepository: categoryRepository,
